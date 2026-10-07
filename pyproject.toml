@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools==80.9.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gamerhq-skill-xp-progression"
+version = "0.1.0"
+description = "Portable GamerHQ Skill for configurable XP, levels, achievements and rewards"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{name = "GamerHQ"}]
+
+[project.entry-points."gamerhq.skills"]
+progression = "gamerhq_skill_xp_progression:create_skill"
+
+[tool.setuptools]
+packages = ["gamerhq_skill_xp_progression"]
+
+[tool.gamerhq]
+skill-id = "progression"
+runtime-api = "1"
+sdk = ">=0.1,<0.2"
+capabilities = [
+  "storage.skill",
+  "audit.write",
+  "discord.messages.send",
+  "discord.channels.read",
+  "discord.members.read",
+  "discord.roles.manage",
+]
