@@ -67,13 +67,19 @@ Typical local flow:
 
 ```bash
 python -m pip install -U pip
-python -m pip install "git+https://github.com/Duy-Phan96/GamerHQ.git@develop"
+# Install a released or reviewed immutable GamerHQ Skill SDK compatible with >=0.1,<0.2.
 python -m pip install -e .
 python -m pytest -q
 ```
+
+Do not use a moving GamerHQ `develop` branch as a release dependency. CI pins an immutable public compatibility commit so this repository remains reproducible and autonomous.
 
 CI validates Python 3.12 and 3.14, package build/install, `pip check`, tests, source portability, SDK conformance, static metadata, capability equality and entry-point identity.
 
 ## Extraction status
 
 Version `0.1.0` is the extracted baseline of the existing GamerHQ Progression implementation. This repository does not deploy production and does not contain the GamerHQ host adapter.
+
+## Repository ownership
+
+This repository owns and releases the Progression Skill independently. GamerHQ Host, gamerhq-web, other Skills and production infrastructure are separate repositories with separate owners and release lifecycles. If Progression needs a new upstream public contract, this project produces a handoff instead of modifying the upstream repository directly.
