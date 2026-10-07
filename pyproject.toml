@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Portable GamerHQ Skill for configurable XP, levels, achievements and rewards"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "GamerHQ"}]
 
 [project.entry-points."gamerhq.skills"]
