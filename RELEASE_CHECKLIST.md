@@ -1,0 +1,22 @@
+# Release Checklist
+
+- [ ] Python 3.12 CI passes.
+- [ ] Python 3.14 CI passes.
+- [ ] Package builds successfully.
+- [ ] Built wheel installs successfully.
+- [ ] `pip check` passes.
+- [ ] Full standalone pytest suite passes.
+- [ ] Source portability audit is clean.
+- [ ] Factory/lifecycle SDK conformance passes.
+- [ ] Static `[tool.gamerhq]` metadata is valid.
+- [ ] Static capabilities exactly match `SkillManifest.permissions`.
+- [ ] Entry-point name equals manifest Skill ID `progression`.
+- [ ] Public Management API IDs are unchanged.
+- [ ] Storage keys remain `config.v1` and `member.v1:<member-id>`.
+- [ ] Partial/legacy member state remains read-compatible without normalization writes.
+- [ ] Capability changes, if any, received explicit review.
+- [ ] Release points to an immutable reviewed commit.
+- [ ] GamerHQ integration pins that reviewed commit.
+- [ ] GamerHQ full CI passes after externalization.
+- [ ] Rollback preserves the same Skill ID and storage namespace.
+- [ ] Production deployment is performed only as a separate explicit action.
