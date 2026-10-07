@@ -34,6 +34,16 @@ Every meaningful handoff must report:
 
 Production deployment is decided only from one immutable GamerHQ Host release candidate and its Server Release Snapshot. Never recommend deploying a moving `develop`/latest branch merely because this repository's CI is green.
 
+### Host-only server update rule
+
+All GamerHQ production server updates are owned and executed from the main Host repository:
+
+`Duy-Phan96/GamerHQ`
+
+Standalone Skill repositories must never execute, initiate, or provide the operational server-update step themselves. They may only report their immutable reviewed package/commit and whether they are ready to be included in the next GamerHQ Host release candidate.
+
+The Host repository is responsible for release-candidate creation, Server Release Snapshot, promotion to `main`, deployment readiness, and the owner-run VPS update procedure. If a Skill change requires a server update, hand that requirement back to GamerHQ instead of running deployment from the Skill project.
+
 Canonical rules live in the GamerHQ Host repository:
 
 - `docs/development/GAMERHQ_ECOSYSTEM_WORKING_RULES.md`
