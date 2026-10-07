@@ -77,3 +77,13 @@ CI validates Python 3.12 and 3.14, package build/install, `pip check`, tests, so
 ## Extraction status
 
 Version `0.1.0` is the extracted baseline of the existing GamerHQ Progression implementation. This repository does not deploy production and does not contain the GamerHQ host adapter.
+
+## Release handoff
+
+The extracted 0.1.0 baseline is **ready for GamerHQ integration**.
+
+Reviewed immutable package commit:
+
+`565ee8379cdd22cb00c18db188eeaddd058e626d`
+
+GamerHQ integrated that exact package through Host PR #114. The Skill repository does not decide or execute GamerHQ production server updates; those belong exclusively to the GamerHQ Host release-candidate and Server Release Snapshot process.
