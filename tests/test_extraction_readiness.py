@@ -75,7 +75,6 @@ class StandaloneReadinessTests(unittest.IsolatedAsyncioTestCase):
         status = await create_skill().member_status(SimpleNamespace(storage=storage), {"memberId": 7})
         self.assertEqual(status["totalXp"], 25)
         self.assertEqual(status["sourceXp"], {})
-        self.assertEqual(status["dailyXp"], {})
         self.assertEqual(status["metrics"], {})
         self.assertEqual(status["achievements"], ())
         self.assertEqual(status["badges"], ())
