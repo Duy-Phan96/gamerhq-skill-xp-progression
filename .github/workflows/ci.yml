@@ -17,8 +17,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install build tooling
         run: python -m pip install --upgrade pip build pytest
-      - name: Install GamerHQ Skill SDK
-        run: python -m pip install "git+https://github.com/Duy-Phan96/GamerHQ.git@develop"
+      - name: Install immutable compatible GamerHQ Skill SDK
+        run: python -m pip install "https://github.com/Duy-Phan96/GamerHQ/archive/bfe87ced8d44243aa31cc212ba5f8f287e21814e.zip"
       - name: Build package
         run: python -m build
       - name: Install wheel
