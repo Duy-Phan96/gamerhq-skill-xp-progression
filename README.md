@@ -83,3 +83,7 @@ Version `0.1.0` is the extracted baseline of the existing GamerHQ Progression im
 ## Repository ownership
 
 This repository owns and releases the Progression Skill independently. GamerHQ Host, gamerhq-web, other Skills and production infrastructure are separate repositories with separate owners and release lifecycles. If Progression needs a new upstream public contract, this project produces a handoff instead of modifying the upstream repository directly.
+
+## Release status
+
+Version `0.1.0` is the first independently releasable standalone Progression baseline. The package is compatible with Runtime API `1` and SDK `>=0.1,<0.2`. Release publication is independent of any GamerHQ Host deployment.
