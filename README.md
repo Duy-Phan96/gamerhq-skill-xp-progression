@@ -87,3 +87,7 @@ This repository owns and releases the Progression Skill independently. GamerHQ H
 ## Release status
 
 Version `0.1.0` is the first independently releasable standalone Progression baseline. The package is compatible with Runtime API `1` and SDK `>=0.1,<0.2`. Release publication is independent of any GamerHQ Host deployment.
+
+## Releasing
+
+See [RELEASES.md](RELEASES.md) for the independent tag and artifact workflow. Tagged releases build reproducible wheel/source artifacts and checksums without deploying any Host.
