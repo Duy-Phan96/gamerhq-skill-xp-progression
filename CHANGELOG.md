@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0
+## 0.1.0 - 2026-10-08
 
 - Extracted the existing GamerHQ Progression & Achievements implementation into its standalone package.
 - Preserved Skill ID `progression`, Runtime API 1, Management API IDs and storage keys.
