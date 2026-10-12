@@ -621,6 +621,30 @@ class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("veteran-role:123", status["ownedRoleGrants"])
         self.assertIn("veteran-role", status["claimedRewards"])
 
+    async def test_channel_access_reward_is_role_backed_and_tracks_ownership(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["rewards"] = [{
+            "id": "vip-channel",
+            "name": "VIP Channel",
+            "trigger": {"type": "xp", "xp": 5},
+            "grants": [{"type": "channel_access", "roleId": 456}],
+            "enabled": True,
+        }]
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        response = await self.skill.record_activity(
+            self.ctx,
+            {"memberId": 7, "source": "voice", "units": 1, "occurredAt": 1_790_000_000},
+        )
+        status = await self.skill.member_status(self.ctx, {"memberId": 7})
+
+        grant = response["rewardEvents"][0]["grants"][0]
+        self.assertEqual(grant["type"], "channel_access")
+        self.assertEqual(grant["roleId"], 456)
+        self.assertTrue(grant["owned"])
+        self.assertIn("vip-channel:456", status["ownedRoleGrants"])
+
     async def test_preexisting_role_reward_is_not_owned(self):
         await self.skill.enable(self.ctx)
         self.discord.roles.add(123)
