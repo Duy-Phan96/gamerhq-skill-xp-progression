@@ -79,9 +79,9 @@ No code-coverage percentage is currently measured; do not infer one.
 - voice `requiresOtherHuman` and `excludeAfk` are configurable but not enforced inside this Skill
 - current achievement thresholds are partly hard-coded by achievement ID
 - `channel_access` currently executes through the same role-grant adapter path as a role reward
+- reward grant payloads are now validated at configuration time instead of deferring malformed IDs/XP values until reward execution
 
 ### Documentation / release gaps
-- the module docstring in `progression.py` still says V1 owns only configuration and deterministic level math, but the implementation now also performs activity, achievements, rewards and announcements
 - no Git tag or GitHub Release exists yet for 0.1.0
 - the tag release workflow still contains a fixed `0.1.0` manifest-version assertion and must become version-neutral before the next version
 - no formal Issue backlog existed at the time of this snapshot
