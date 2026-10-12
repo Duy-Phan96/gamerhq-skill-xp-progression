@@ -308,6 +308,21 @@ def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
         item["xp"] = _positive_int(item.get("xp", 1), f"xpSources.{key}.xp")
         if "dailyCap" in item:
             item["dailyCap"] = _positive_int(item["dailyCap"], f"xpSources.{key}.dailyCap")
+        if key == "chat" and "cooldownMinutes" in item:
+            item["cooldownMinutes"] = _positive_int(
+                item["cooldownMinutes"],
+                "xpSources.chat.cooldownMinutes",
+            )
+        if key == "voice":
+            if "windowMinutes" in item:
+                item["windowMinutes"] = _positive_int(
+                    item["windowMinutes"],
+                    "xpSources.voice.windowMinutes",
+                )
+            if "requiresOtherHuman" in item:
+                item["requiresOtherHuman"] = bool(item["requiresOtherHuman"])
+            if "excludeAfk" in item:
+                item["excludeAfk"] = bool(item["excludeAfk"])
         sources[key] = item
     config["xpSources"] = sources
 
@@ -525,6 +540,7 @@ class ProgressionSkill:
             "sourceXp": dict(state.get("sourceXp") or {}),
             "dailyXp": dict(state.get("dailyXp") or {}),
             "metrics": dict(state.get("metrics") or {}),
+            "lastActivity": dict(state.get("lastActivity") or {}),
             "achievements": list(state.get("achievements") or []),
             "seenActivity": list(state.get("seenActivity") or []),
             "badges": list(state.get("badges") or []),
@@ -582,6 +598,32 @@ class ProgressionSkill:
                 "xpToNextLevel": needed,
                 "unlockedAchievements": (),
             }
+        if source_id == "chat":
+            cooldown_seconds = int(source.get("cooldownMinutes", 0)) * 60
+            last_chat = int(state["lastActivity"].get("chat", 0))
+            if cooldown_seconds and last_chat and occurred_at < last_chat + cooldown_seconds:
+                if dedupe_key:
+                    state["seenActivity"].append(dedupe_key)
+                    state["seenActivity"] = state["seenActivity"][-500:]
+                    await ctx.storage.set(MEMBER_KEY_PREFIX + str(member_id), state)
+                level, current, needed = level_for_xp(
+                    state["totalXp"],
+                    config["levelCurve"],
+                )
+                return {
+                    "memberId": member_id,
+                    "source": source_id,
+                    "awardedXp": 0,
+                    "reason": "cooldown",
+                    "totalXp": state["totalXp"],
+                    "level": level,
+                    "currentLevelXp": current,
+                    "xpToNextLevel": needed,
+                    "unlockedAchievements": (),
+                    "rewardEvents": (),
+                    "announcementSent": False,
+                }
+
         day = datetime.fromtimestamp(occurred_at, tz=timezone.utc).date().isoformat()
         daily = dict(state["dailyXp"].get(day) or {})
         configured = int(source["xp"]) * units
@@ -594,6 +636,8 @@ class ProgressionSkill:
             state["sourceXp"][source_id] = int(state["sourceXp"].get(source_id, 0)) + awarded
             daily[source_id] = already + awarded
             state["dailyXp"] = {day: daily}
+            if source_id == "chat":
+                state["lastActivity"]["chat"] = occurred_at
 
         if source_id == "voice":
             minutes = int(source.get("windowMinutes", 10)) * units
