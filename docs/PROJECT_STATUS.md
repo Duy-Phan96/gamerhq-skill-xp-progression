@@ -2,15 +2,23 @@
 
 **Snapshot date:** 2026-10-12  
 **Repository:** `Duy-Phan96/gamerhq-skill-xp-progression`  
-**Current package version:** `0.1.0`  
-**Maturity:** Alpha / release-ready baseline  
-**Current main at release-finalization start:** `9e82dfcbccea614aaf760a681939359889198b0a`
+**Released version:** `v0.1.0`  
+**Release commit:** `f32d27815b52a5a3cb94c4632904fd5692d3ffd4`  
+**Maturity:** Released Alpha / stable standalone baseline
 
 ## Executive status
 
-The standalone extraction is complete and technically healthy. The repository has a stable public identity, independent CI, tests and release tooling. The major remaining baseline task is publication of the first immutable release.
+The standalone Progression extraction is complete and `v0.1.0` is officially released.
 
-The next development phase should focus on contract/behavior consistency before adding broad new features.
+Verified release state:
+- annotated tag `v0.1.0` points to the approved release commit;
+- GitHub Release exists;
+- wheel is published;
+- source distribution is published;
+- `SHA256SUMS.txt` is published;
+- release issue #13 is completed.
+
+The repository can now move into 0.2.0 development without changing the immutable 0.1.0 baseline.
 
 ## Verified implementation
 
@@ -21,10 +29,13 @@ Implemented and covered by code/tests:
 - daily XP caps
 - bounded activity deduplication
 - member metrics
-- declarative `metric_at_least` achievement unlocks for Progression-owned metrics
+- declarative `metric_at_least` achievement rules
 - level / XP / achievement reward triggers
 - badge, title, XP bonus and role-based grants
+- role-backed channel-access rewards
 - safe ownership tracking for role grants
+- Skill-owned chat cooldown enforcement
+- explicit Host ownership of raw voice eligibility observation
 - configurable announcements with suppressed Discord mentions
 - revision-safe configuration updates
 - Skill health check
@@ -37,6 +48,7 @@ Implemented and covered by code/tests:
 ### Identity
 - Skill ID: `progression`
 - Runtime API: `1`
+- released version: `0.1.0`
 - SDK: `>=0.1,<0.2`
 
 ### Storage
@@ -61,7 +73,7 @@ Implemented and covered by code/tests:
 
 ## Quality evidence
 
-Latest reviewed CI evidence:
+Release baseline CI:
 - Python 3.12: 41 tests passed, 5 subtests passed
 - Python 3.14: 41 tests passed, 5 subtests passed
 - package build: pass
@@ -70,31 +82,21 @@ Latest reviewed CI evidence:
 
 No code-coverage percentage is currently measured; do not infer one.
 
-## Important known gaps
+## Remaining product gaps
 
-### Product / contract gaps
-- achievement `repeatable: true` remains compatibility-reserved; Rule V1 deliberately does not invent repeated-award semantics without an explicit repeat interval/condition
-- default achievements `server-booster` and `first-game` have definitions but no local automatic unlock path
-- chat `cooldownMinutes` is Skill-owned and enforced by `record_activity()` using `occurredAt` plus additive member state
-- voice `requiresOtherHuman` and `excludeAfk` are explicitly Host observation requirements because raw Discord voice-state context is outside this repository
-- locally measurable achievements now use validated declarative `metric_at_least` conditions instead of a hard-coded achievement-ID threshold table
-- `channel_access` is explicitly defined as a role-backed access grant in Runtime API 1; direct channel-permission mutation is out of scope without a future public Host capability
-- reward grant payloads are now validated at configuration time instead of deferring malformed IDs/XP values until reward execution
+- `repeatable: true` remains compatibility-reserved and has no repeated-award semantics yet.
+- `server-booster` depends on an external signal.
+- `first-game` depends on an external signal.
+- public external progression-signal semantics are not yet defined.
+- no automatic Host integration should be assumed merely because the Skill release exists.
 
-### Documentation / release gaps
-- no Git tag or GitHub Release exists yet for 0.1.0
-- GitHub Issues now track the operational backlog; issues #14, #15, #16 and #17 were completed from the audit findings
+## Current strategy
 
-## Product strategy
-
-Near-term priority:
-1. publish 0.1.0
-2. align configuration with real runtime semantics
-3. make achievement/rule behavior more generic only after the contract is approved
-4. improve contributor/security documentation
-5. defer growth features until real usage justifies them
-
-Avoid adding broad feature scope before the existing contract is internally consistent.
+Next focus:
+1. define external progression-signal semantics;
+2. define safe repeatable-achievement semantics;
+3. preserve 0.1.0 compatibility while preparing 0.2.0;
+4. defer broad growth features until those contracts are stable.
 
 ## Repository ownership
 
@@ -104,6 +106,6 @@ External changes use handoffs. The repository must not directly modify GamerHQ H
 
 ## Current release status
 
-**READY FOR RELEASE — 0.1.0**
+**RELEASED — v0.1.0**
 
-This means the Skill is technically ready for its own publication. It does not imply that any Host should deploy or update.
+No production/server deployment is implied by this release.
