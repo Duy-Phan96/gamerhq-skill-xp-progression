@@ -85,9 +85,9 @@ No code-coverage percentage is currently measured; do not infer one.
 ## Remaining product gaps
 
 - `repeatable: true` remains compatibility-reserved and has no repeated-award semantics yet.
-- `server-booster` depends on an external signal.
-- `first-game` depends on an external signal.
-- public external progression-signal semantics are not yet defined.
+- `server-booster` is wired to the public `discord/server_boosted` external signal condition.
+- `first-game` is wired to the public `profile/first_game_added` external signal condition.
+- `progression.record-signal.v1` defines bounded, replay-safe external signal ingestion without arbitrary XP injection.
 - no automatic Host integration should be assumed merely because the Skill release exists.
 
 ## Current strategy
