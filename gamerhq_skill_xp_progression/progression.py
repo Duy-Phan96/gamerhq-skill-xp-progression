@@ -22,6 +22,7 @@ from skill_runtime.contracts.manifest import SkillManagementApis, SkillManifest
 SKILL_ID = "progression"
 SKILL_VERSION = "0.1.0"
 RUNTIME_API_VERSION = "1"
+MAX_REPEAT_AWARDS_PER_CALL = 100
 
 CONFIG_KEY = "config.v1"
 MEMBER_KEY_PREFIX = "member.v1:"
@@ -396,7 +397,21 @@ def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
                 )
             else:
                 raise ValueError(f"achievement {achievement_id} has an unsupported condition")
+            if item["repeatable"]:
+                if condition_type == "metric_at_least":
+                    condition["repeatEvery"] = _positive_int(
+                        condition.get("repeatEvery"),
+                        f"achievement {achievement_id} repeatEvery",
+                    )
+            elif "repeatEvery" in condition:
+                raise ValueError(
+                    f"achievement {achievement_id} repeatEvery requires repeatable=true"
+                )
             item["condition"] = condition
+        if item["repeatable"] and not item.get("condition"):
+            raise ValueError(
+                f"achievement {achievement_id} repeatable achievements need a condition"
+            )
         achievements.append(item)
     config["achievements"] = achievements
 
@@ -574,6 +589,7 @@ class ProgressionSkill:
             "metrics": dict(state.get("metrics") or {}),
             "lastActivity": dict(state.get("lastActivity") or {}),
             "achievements": list(state.get("achievements") or []),
+            "achievementCounts": dict(state.get("achievementCounts") or {}),
             "seenActivity": list(state.get("seenActivity") or []),
             "seenSignals": list(state.get("seenSignals") or []),
             "badges": list(state.get("badges") or []),
@@ -596,6 +612,7 @@ class ProgressionSkill:
             "sourceXp": state["sourceXp"],
             "metrics": state["metrics"],
             "achievements": tuple(state["achievements"]),
+            "achievementCounts": dict(state["achievementCounts"]),
             "badges": tuple(state["badges"]),
             "titles": tuple(state["titles"]),
             "claimedRewards": tuple(state["claimedRewards"]),
@@ -686,28 +703,47 @@ class ProgressionSkill:
             if not achievement.get("enabled"):
                 continue
             achievement_id = achievement["id"]
-            if achievement_id in owned:
-                continue
             condition = achievement.get("condition")
-            if not condition:
-                # Definitions without local conditions require an external public signal.
+            if not condition or condition["type"] != "metric_at_least":
                 continue
-            if condition["type"] != "metric_at_least":
-                # External-signal achievements are evaluated only by record_signal().
-                continue
+
             metric_value = int(state["metrics"].get(condition["metric"], 0))
-            if metric_value < int(condition["threshold"]):
+            threshold = int(condition["threshold"])
+            if metric_value < threshold:
                 continue
-            owned.add(achievement_id)
-            state["achievements"].append(achievement_id)
-            bonus = int(achievement["xp"])
+
+            previous_count = int(state["achievementCounts"].get(achievement_id, 0))
+            repeatable = bool(achievement.get("repeatable"))
+            if repeatable:
+                repeat_every = int(condition["repeatEvery"])
+                eligible_count = 1 + (metric_value - threshold) // repeat_every
+                pending = max(0, eligible_count - previous_count)
+                occurrence_count = min(pending, MAX_REPEAT_AWARDS_PER_CALL)
+                if occurrence_count <= 0:
+                    continue
+            else:
+                if achievement_id in owned:
+                    continue
+                occurrence_count = 1
+
+            if achievement_id not in owned:
+                owned.add(achievement_id)
+                state["achievements"].append(achievement_id)
+
+            new_count = previous_count + occurrence_count
+            state["achievementCounts"][achievement_id] = new_count
+            bonus = int(achievement["xp"]) * occurrence_count
             state["totalXp"] += bonus
-            state["sourceXp"]["achievement"] = int(state["sourceXp"].get("achievement", 0)) + bonus
+            state["sourceXp"]["achievement"] = int(
+                state["sourceXp"].get("achievement", 0)
+            ) + bonus
             unlocked.append({
                 "id": achievement_id,
                 "name": achievement["name"],
                 "emoji": achievement.get("emoji", ""),
                 "xp": bonus,
+                "occurrences": occurrence_count,
+                "totalOccurrences": new_count,
             })
 
         if dedupe_key:
@@ -876,16 +912,26 @@ class ProgressionSkill:
         unlocked = []
         owned = set(state["achievements"])
         for achievement in config["achievements"]:
-            if not achievement.get("enabled") or achievement["id"] in owned:
+            if not achievement.get("enabled"):
                 continue
             condition = achievement.get("condition")
             if not condition or condition.get("type") != "external_signal":
                 continue
             if condition["provider"] != provider or condition["signal"] != signal:
                 continue
+
             achievement_id = achievement["id"]
-            owned.add(achievement_id)
-            state["achievements"].append(achievement_id)
+            repeatable = bool(achievement.get("repeatable"))
+            previous_count = int(state["achievementCounts"].get(achievement_id, 0))
+            if not repeatable and achievement_id in owned:
+                continue
+
+            if achievement_id not in owned:
+                owned.add(achievement_id)
+                state["achievements"].append(achievement_id)
+
+            new_count = previous_count + 1
+            state["achievementCounts"][achievement_id] = new_count
             bonus = int(achievement["xp"])
             state["totalXp"] += bonus
             state["sourceXp"]["achievement"] = int(
@@ -896,6 +942,8 @@ class ProgressionSkill:
                 "name": achievement["name"],
                 "emoji": achievement.get("emoji", ""),
                 "xp": bonus,
+                "occurrences": 1,
+                "totalOccurrences": new_count,
             })
 
         reward_events = []
