@@ -44,7 +44,10 @@ jobs:
           assert len(eps) == 1, eps
           skill = eps[0].load()()
           assert skill.manifest.id == "progression"
-          assert skill.manifest.version == "0.1.0"
+          import tomllib
+          with open("pyproject.toml", "rb") as fh:
+              expected_version = tomllib.load(fh)["project"]["version"]
+          assert skill.manifest.version == expected_version
           assert skill.manifest.runtime_api_version == "1"
           PY
       - name: Create checksums
