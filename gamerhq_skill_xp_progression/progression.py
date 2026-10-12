@@ -1,8 +1,9 @@
-"""Portable Progression & Achievements Skill foundation.
+"""Portable Progression & Achievements Skill.
 
-V1 owns configuration and deterministic level math only. Activity adapters and
-reward execution are separate slices so the portable Skill never imports GamerHQ
-or discord.py internals.
+V1 owns progression configuration, deterministic level math, activity awards,
+achievement unlocks, reward execution and milestone announcements. Host-specific
+Discord observation remains outside this package; the Skill uses only public
+Runtime/SDK contracts and host-neutral adapters.
 """
 from __future__ import annotations
 
@@ -360,6 +361,27 @@ def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
             kind = str(grant.get("type", ""))
             if kind not in allowed_types:
                 raise ValueError(f"reward {reward_id} has unsupported grant type")
+            grant["type"] = kind
+            if kind == "badge":
+                badge_id = str(grant.get("badgeId", "")).strip()
+                if not badge_id or len(badge_id) > 80:
+                    raise ValueError(f"reward {reward_id} badgeId must be 1-80 characters")
+                grant["badgeId"] = badge_id
+            elif kind == "title":
+                title = str(grant.get("title", "")).strip()
+                if not title or len(title) > 80:
+                    raise ValueError(f"reward {reward_id} title must be 1-80 characters")
+                grant["title"] = title
+            elif kind == "xp_bonus":
+                grant["xp"] = _positive_int(
+                    grant.get("xp"),
+                    f"reward {reward_id} xp bonus",
+                )
+            elif kind in {"role", "channel_access"}:
+                grant["roleId"] = _positive_int(
+                    grant.get("roleId"),
+                    f"reward {reward_id} roleId",
+                )
             grants.append(grant)
         if not grants:
             raise ValueError(f"reward {reward_id} needs at least one grant")
