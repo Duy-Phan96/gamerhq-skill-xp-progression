@@ -84,19 +84,21 @@ No code-coverage percentage is currently measured; do not infer one.
 
 ## Remaining product gaps
 
-- `repeatable: true` uses explicit metric intervals (`repeatEvery`) or unique deduplicated external-signal occurrences, with additive `achievementCounts` state.
-- `server-booster` is wired to the public `discord/server_boosted` external signal condition.
-- `first-game` is wired to the public `profile/first_game_added` external signal condition.
-- `progression.record-signal.v1` defines bounded, replay-safe external signal ingestion without arbitrary XP injection.
-- no automatic Host integration should be assumed merely because the Skill release exists.
+Progression-side 0.2 contract work is complete:
+- repeatable achievements use explicit bounded semantics;
+- `server-booster` maps to `discord/server_boosted`;
+- `first-game` maps to `profile/first_game_added`;
+- `progression.record-signal.v1` is bounded and replay-safe.
+
+Remaining gap is downstream adoption: a compatible Host must choose to emit those public signals. This is not a blocker for an independent Progression release.
 
 ## Current strategy
 
 Next focus:
-1. define external progression-signal semantics;
-2. define safe repeatable-achievement semantics;
-3. preserve 0.1.0 compatibility while preparing 0.2.0;
-4. defer broad growth features until those contracts are stable.
+1. prepare the standalone `0.2.0` release;
+2. preserve the public compatibility guarantees;
+3. hand off optional GamerHQ signal-adapter adoption;
+4. defer broad growth features until post-0.2 usage justifies them.
 
 ## Repository ownership
 
