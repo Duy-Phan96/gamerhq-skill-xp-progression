@@ -99,3 +99,7 @@ See [ROADMAP.md](ROADMAP.md) for milestones and scope, and [docs/PROJECT_STATUS.
 ## Contributing and security
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [SECURITY.md](SECURITY.md) for security boundaries and vulnerability reporting guidance.
+
+## Host integration handoff
+
+Progression exposes host-neutral external progression signals independently of any specific Host. The current optional GamerHQ adoption request is documented in [docs/HANDOFF_GAMERHQ_SIGNALS.md](docs/HANDOFF_GAMERHQ_SIGNALS.md).
