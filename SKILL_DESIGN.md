@@ -107,3 +107,28 @@ Contract:
 - disabling or removing the reward does not automatically revoke pre-existing access.
 
 This keeps the Skill inside the existing `discord.roles.manage` capability and avoids inventing a new channel-permission capability. If future product requirements need direct per-member channel overrides, that would require a separate public Host capability and a HANDOFF rather than private Host access.
+
+## External progression signals
+
+Progression exposes `progression.record-signal.v1` for host-neutral, replay-safe external facts that this Skill cannot observe itself.
+
+Payload:
+
+- `memberId`: positive Discord member ID;
+- `provider`: bounded lowercase provider identifier;
+- `signal`: bounded lowercase signal identifier;
+- `dedupeKey`: required stable event key, max 160 characters;
+- `occurredAt`: optional bounded Unix timestamp.
+
+The contract does **not** accept arbitrary XP amounts, arbitrary metrics or reward grants. It can only satisfy achievements that explicitly declare an `external_signal` condition matching both `provider` and `signal`. XP and rewards continue to come from reviewed Progression configuration.
+
+Replay behavior:
+- every accepted valid signal consumes its `dedupeKey`, including unhandled signals;
+- replay of the same key returns `duplicate` and cannot later award XP after a config change;
+- the bounded signal-dedupe history is additive member state.
+
+Default external conditions:
+- `server-booster`: provider `discord`, signal `server_boosted`;
+- `first-game`: provider `profile`, signal `first_game_added`.
+
+Unknown provider/signal pairs fail safely as `unhandled`. Invalid identifiers or missing dedupe keys are rejected.
