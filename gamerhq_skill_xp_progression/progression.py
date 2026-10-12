@@ -181,6 +181,7 @@ DEFAULT_CONFIG = {
             "xp": 50,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "lfgParticipations", "threshold": 1},
         },
         {
             "id": "event-regular",
@@ -190,6 +191,7 @@ DEFAULT_CONFIG = {
             "xp": 150,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "lfgParticipations", "threshold": 10},
         },
         {
             "id": "community-host",
@@ -199,6 +201,7 @@ DEFAULT_CONFIG = {
             "xp": 300,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "eventsHosted", "threshold": 10},
         },
         {
             "id": "voice-rookie",
@@ -208,6 +211,7 @@ DEFAULT_CONFIG = {
             "xp": 100,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "voiceMinutes", "threshold": 300},
         },
         {
             "id": "voice-regular",
@@ -217,6 +221,7 @@ DEFAULT_CONFIG = {
             "xp": 250,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "voiceMinutes", "threshold": 1500},
         },
         {
             "id": "voice-veteran",
@@ -226,6 +231,7 @@ DEFAULT_CONFIG = {
             "xp": 750,
             "enabled": True,
             "repeatable": False,
+            "condition": {"type": "metric_at_least", "metric": "voiceMinutes", "threshold": 6000},
         },
     ],
     "rewards": [],
@@ -324,6 +330,27 @@ def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
         item["xp"] = _positive_int(item.get("xp", 1), f"achievement {achievement_id} xp")
         item["enabled"] = bool(item.get("enabled", True))
         item["repeatable"] = bool(item.get("repeatable", False))
+        condition = item.get("condition")
+        if condition is None:
+            item["condition"] = None
+        else:
+            if not isinstance(condition, Mapping):
+                raise ValueError(f"achievement {achievement_id} condition must be an object")
+            condition = dict(condition)
+            condition_type = str(condition.get("type", "")).strip()
+            if condition_type != "metric_at_least":
+                raise ValueError(f"achievement {achievement_id} has an unsupported condition")
+            metric = str(condition.get("metric", "")).strip()
+            allowed_metrics = {"voiceMinutes", "lfgParticipations", "eventsHosted"}
+            if metric not in allowed_metrics:
+                raise ValueError(f"achievement {achievement_id} references an unsupported metric")
+            condition["type"] = condition_type
+            condition["metric"] = metric
+            condition["threshold"] = _positive_int(
+                condition.get("threshold"),
+                f"achievement {achievement_id} threshold",
+            )
+            item["condition"] = condition
         achievements.append(item)
     config["achievements"] = achievements
 
@@ -577,22 +604,21 @@ class ProgressionSkill:
             state["metrics"]["eventsHosted"] = int(state["metrics"].get("eventsHosted", 0)) + units
 
         unlocked = []
-        thresholds = {
-            "first-mate": ("lfgParticipations", 1),
-            "event-regular": ("lfgParticipations", 10),
-            "community-host": ("eventsHosted", 10),
-            "voice-rookie": ("voiceMinutes", 300),
-            "voice-regular": ("voiceMinutes", 1500),
-            "voice-veteran": ("voiceMinutes", 6000),
-        }
-        achievement_map = {item["id"]: item for item in config["achievements"] if item.get("enabled")}
         owned = set(state["achievements"])
-        for achievement_id, (metric, threshold) in thresholds.items():
-            if achievement_id in owned or int(state["metrics"].get(metric, 0)) < threshold:
+        for achievement in config["achievements"]:
+            if not achievement.get("enabled"):
                 continue
-            achievement = achievement_map.get(achievement_id)
-            if not achievement:
+            achievement_id = achievement["id"]
+            if achievement_id in owned:
                 continue
+            condition = achievement.get("condition")
+            if not condition:
+                # Definitions without local conditions require an external public signal.
+                continue
+            if condition["type"] == "metric_at_least":
+                metric_value = int(state["metrics"].get(condition["metric"], 0))
+                if metric_value < int(condition["threshold"]):
+                    continue
             owned.add(achievement_id)
             state["achievements"].append(achievement_id)
             bonus = int(achievement["xp"])
