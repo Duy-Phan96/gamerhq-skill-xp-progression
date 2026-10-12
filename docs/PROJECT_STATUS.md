@@ -110,6 +110,6 @@ External changes use handoffs. The repository must not directly modify GamerHQ H
 ## Current release status
 
 **v0.1.0 — RELEASED**  
-**v0.2.0 — RELEASE CANDIDATE / CI PENDING**
+**v0.2.0 — READY FOR RELEASE**
 
 No production/server deployment is implied by either status.
