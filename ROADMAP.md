@@ -41,7 +41,7 @@ Progression is independently versioned, released and consumable by a compatible 
 
 ## Milestone 2 — Progression interoperability & rule completeness
 
-**Status:** Active planning  
+**Status:** Core implementation complete / downstream adoption pending  
 **Priority:** P1
 
 ### Objective
@@ -50,28 +50,35 @@ Complete the rule model for progression events that cannot currently be inferred
 
 ### Current gaps
 
-- `server-booster` has no local automatic unlock source.
-- `first-game` has no local automatic unlock source.
-- `repeatable: true` is compatibility-reserved but intentionally has no repeated-award semantics.
-- cross-Skill / Host-originated progression signals need a stable host-neutral contract before they can drive achievements safely.
+- public external signals are implemented through `progression.record-signal.v1`;
+- `server-booster` maps to `discord/server_boosted`;
+- `first-game` maps to `profile/first_game_added`;
+- repeatable achievements have explicit safe semantics;
+- compatible Hosts still need adapters that emit the public signals.
 
-### Planned design work
+### Completed design work
 
-- define a bounded public external progression-signal contract;
-- decide whether it belongs in an existing Management API or a new versioned API;
-- define idempotency / dedupe requirements;
-- define which signal types are Progression-owned versus external-provider-owned;
-- define explicit repeatable-achievement semantics before enabling repeated XP.
+- dedicated `progression.record-signal.v1` contract;
+- bounded provider/signal identifiers;
+- required replay-safe dedupe keys;
+- explicit external-signal achievement conditions;
+- explicit metric `repeatEvery` semantics;
+- repeatable external signals once per unique deduplicated event.
+
+### Downstream adoption
+
+A compatible Host may independently add adapters for these public signals. See `docs/HANDOFF_GAMERHQ_SIGNALS.md` for the current GamerHQ handoff.
 
 No external repository may be modified from this project. If a compatible Host needs to emit a new public signal, create a handoff after the Progression-side contract is defined.
 
 ### Acceptance criteria
 
-- external achievement triggers no longer depend on private Host knowledge;
-- replay-safe/idempotent signal semantics are defined;
-- existing Runtime API 1 and storage compatibility are preserved where practical;
-- repeatability cannot create ambiguous or uncontrolled repeated XP;
-- tests cover all approved public behavior.
+- [x] external achievement triggers do not depend on private Host knowledge;
+- [x] replay-safe/idempotent signal semantics are defined;
+- [x] Runtime API 1 and storage compatibility are preserved;
+- [x] repeatability is bounded and explicit;
+- [x] tests cover approved public behavior;
+- [ ] downstream Host adoption is verified separately.
 
 ## Milestone 3 — Developer and operator usability
 
