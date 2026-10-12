@@ -160,6 +160,47 @@ class ProgressionConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unknown achievement"):
             validate_config(config)
 
+    def test_reward_grant_payloads_are_validated_at_config_time(self):
+        cases = (
+            ({"type": "role", "roleId": 0}, "roleId"),
+            ({"type": "channel_access"}, "roleId"),
+            ({"type": "xp_bonus", "xp": 0}, "xp bonus"),
+            ({"type": "badge", "badgeId": "   "}, "badgeId"),
+            ({"type": "title", "title": ""}, "title"),
+        )
+        for grant, message in cases:
+            with self.subTest(grant=grant):
+                config = deepcopy(DEFAULT_CONFIG)
+                config["rewards"] = [{
+                    "id": "invalid-grant",
+                    "trigger": {"type": "xp", "xp": 5},
+                    "grants": [grant],
+                }]
+                with self.assertRaisesRegex(ValueError, message):
+                    validate_config(config)
+
+    def test_reward_grant_payloads_are_normalized_when_valid(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        config["rewards"] = [{
+            "id": "valid-grants",
+            "trigger": {"type": "xp", "xp": 5},
+            "grants": [
+                {"type": "badge", "badgeId": " badge-one "},
+                {"type": "title", "title": " Veteran "},
+                {"type": "xp_bonus", "xp": "25"},
+                {"type": "role", "roleId": "123"},
+                {"type": "channel_access", "roleId": 456},
+                {"type": "announcement"},
+            ],
+        }]
+        result = validate_config(config)
+        grants = result["rewards"][0]["grants"]
+        self.assertEqual(grants[0]["badgeId"], "badge-one")
+        self.assertEqual(grants[1]["title"], "Veteran")
+        self.assertEqual(grants[2]["xp"], 25)
+        self.assertEqual(grants[3]["roleId"], 123)
+        self.assertEqual(grants[4]["roleId"], 456)
+
 
 class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
