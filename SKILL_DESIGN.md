@@ -76,3 +76,7 @@ The Skill uses only public Runtime capabilities and Skill-scoped storage. It doe
 ## Failure and retry behavior
 
 Configuration writes use revision checks to reject stale edits. Activity dedupe makes retried host signals safe when a stable dedupe key is supplied. Host-side signal collection remains responsible for retrying transient observation/Runtime failures.
+
+## Achievement rule model
+
+The approved local rule model is documented in [docs/ACHIEVEMENT_RULES.md](docs/ACHIEVEMENT_RULES.md). Locally measurable achievements use declarative metric thresholds. Achievements that depend on external Host state remain inert until a public signal contract exists; the Skill does not inspect Host internals.
