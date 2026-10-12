@@ -1,0 +1,110 @@
+# Project Status
+
+**Snapshot date:** 2026-10-12  
+**Repository:** `Duy-Phan96/gamerhq-skill-xp-progression`  
+**Current package version:** `0.1.0`  
+**Maturity:** Alpha / release-ready baseline  
+**Current main:** `f0d589136854d2f62c11ca1e0a01d0126bc893a6`
+
+## Executive status
+
+The standalone extraction is complete and technically healthy. The repository has a stable public identity, independent CI, tests and release tooling. The major remaining baseline task is publication of the first immutable release.
+
+The next development phase should focus on contract/behavior consistency before adding broad new features.
+
+## Verified implementation
+
+Implemented and covered by code/tests:
+- deterministic level curve and level previews
+- source-based XP awards
+- per-source totals
+- daily XP caps
+- bounded activity deduplication
+- member metrics
+- achievement unlocks for current hard-coded metric thresholds
+- level / XP / achievement reward triggers
+- badge, title, XP bonus and role-based grants
+- safe ownership tracking for role grants
+- configurable announcements with suppressed Discord mentions
+- revision-safe configuration updates
+- Skill health check
+- generic Management UI Schema
+- six public Management API contracts
+- additive reads of partial legacy member state
+
+## Current public contracts
+
+### Identity
+- Skill ID: `progression`
+- Runtime API: `1`
+- SDK: `>=0.1,<0.2`
+
+### Storage
+- `config.v1`
+- `member.v1:<discord-member-id>`
+
+### Management APIs
+- `progression.status.v1`
+- `progression.get-config.v1`
+- `progression.update-config.v1`
+- `progression.preview-level.v1`
+- `progression.record-activity.v1`
+- `progression.member-status.v1`
+
+### Capabilities
+- `storage.skill`
+- `audit.write`
+- `discord.messages.send`
+- `discord.channels.read`
+- `discord.members.read`
+- `discord.roles.manage`
+
+## Quality evidence
+
+Latest reviewed CI evidence:
+- Python 3.12: 31 tests passed
+- Python 3.14: 31 tests passed
+- package build: pass
+- wheel install: pass
+- `pip check`: pass
+
+No code-coverage percentage is currently measured; do not infer one.
+
+## Important known gaps
+
+### Product / contract gaps
+- achievement `repeatable` is accepted in configuration but does not currently change unlock behavior
+- default achievements `server-booster` and `first-game` have definitions but no local automatic unlock path
+- chat `cooldownMinutes` is configurable but not enforced by `record_activity()`
+- voice `requiresOtherHuman` and `excludeAfk` are configurable but not enforced inside this Skill
+- current achievement thresholds are partly hard-coded by achievement ID
+- `channel_access` currently executes through the same role-grant adapter path as a role reward
+
+### Documentation / release gaps
+- the module docstring in `progression.py` still says V1 owns only configuration and deterministic level math, but the implementation now also performs activity, achievements, rewards and announcements
+- no Git tag or GitHub Release exists yet for 0.1.0
+- the tag release workflow still contains a fixed `0.1.0` manifest-version assertion and must become version-neutral before the next version
+- no formal Issue backlog existed at the time of this snapshot
+
+## Product strategy
+
+Near-term priority:
+1. publish 0.1.0
+2. align configuration with real runtime semantics
+3. make achievement/rule behavior more generic only after the contract is approved
+4. improve contributor/security documentation
+5. defer growth features until real usage justifies them
+
+Avoid adding broad feature scope before the existing contract is internally consistent.
+
+## Repository ownership
+
+This repository owns only the Progression Skill and its release lifecycle.
+
+External changes use handoffs. The repository must not directly modify GamerHQ Host, gamerhq-web, another Skill or production infrastructure.
+
+## Current release status
+
+**READY FOR RELEASE — 0.1.0**
+
+This means the Skill is technically ready for its own publication. It does not imply that any Host should deploy or update.
