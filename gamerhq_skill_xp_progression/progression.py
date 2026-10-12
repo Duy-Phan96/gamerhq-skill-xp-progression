@@ -20,7 +20,7 @@ from skill_runtime.contracts.manifest import SkillManagementApis, SkillManifest
 
 
 SKILL_ID = "progression"
-SKILL_VERSION = "0.1.0"
+SKILL_VERSION = "0.2.0"
 RUNTIME_API_VERSION = "1"
 MAX_REPEAT_AWARDS_PER_CALL = 100
 
