@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 - 2026-10-12
+
+- Added public host-neutral external progression signals through `progression.record-signal.v1`.
+- Added replay-safe required signal dedupe keys and bounded provider/signal identifiers.
+- Wired `server-booster` to `discord/server_boosted` and `first-game` to `profile/first_game_added`.
+- Prevented external signals from injecting arbitrary XP, metrics or reward payloads; configured Progression rules remain authoritative.
+- Added safe repeatable achievement semantics:
+  - metric achievements use explicit `repeatEvery` intervals;
+  - external-signal achievements repeat only for unique deduplicated events.
+- Added additive `achievementCounts` and `seenSignals` member state while preserving existing storage keys.
+- Kept reward bundles one-time through existing `claimedRewards` semantics even when achievement XP is repeatable.
+- Added GamerHQ Host adoption handoff documentation without coupling this repository to Host internals.
+- Preserved Skill ID `progression`, Runtime API `1`, existing capabilities and storage namespaces.
+
 ## 0.1.0 - 2026-10-12
 
 - Extracted the existing GamerHQ Progression & Achievements implementation into its standalone package.
