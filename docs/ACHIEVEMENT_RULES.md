@@ -75,11 +75,30 @@ If automatic support is required, create a HANDOFF for a public contract. Do not
 
 `repeatable: false` means the achievement can unlock only once per member.
 
-`repeatable: true` is reserved but **not enabled in Rule V1** because a single `metric_at_least` condition does not define a safe repeat interval. Existing configurations continue to parse the field for compatibility, but a repeatable achievement without an explicit future repeat rule must not produce repeated XP.
+`repeatable: true` is supported with explicit, condition-specific semantics:
 
-A later compatible extension may introduce an explicit repeat model such as `every` or a distinct repeat condition. That requires separate review and tests.
+### Metric conditions
 
-This deliberately avoids inventing ambiguous semantics such as awarding repeatedly on every subsequent activity after a threshold is crossed.
+A repeatable `metric_at_least` achievement must define `repeatEvery`.
+
+- first occurrence: when `metric >= threshold`;
+- second occurrence: when `metric >= threshold + repeatEvery`;
+- third occurrence: when `metric >= threshold + 2 * repeatEvery`;
+- and so on.
+
+A true condition that has not crossed another interval does not award again. Up to 100 crossed occurrences may be reconciled in one activity call.
+
+### External-signal conditions
+
+A repeatable `external_signal` achievement awards once for each unique matching signal event. The required signal `dedupeKey` provides replay safety.
+
+### Rewards
+
+Repeatable achievement XP may repeat, but configured rewards remain one-time through existing `claimedRewards` semantics. Repeatable rewards would require a separate explicit design.
+
+### State
+
+`achievementCounts` stores occurrence counts additively per achievement. The existing `achievements` list continues to mean “unlocked at least once”, preserving member-state compatibility.
 
 ## Storage compatibility
 
