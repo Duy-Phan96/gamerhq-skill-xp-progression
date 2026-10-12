@@ -3,8 +3,9 @@
 **Snapshot date:** 2026-10-12  
 **Repository:** `Duy-Phan96/gamerhq-skill-xp-progression`  
 **Released version:** `v0.1.0`  
+**Release candidate:** `0.2.0`  
 **Release commit:** `f32d27815b52a5a3cb94c4632904fd5692d3ffd4`  
-**Maturity:** Released Alpha / stable standalone baseline
+**Maturity:** Released Alpha / 0.2.0 release candidate
 
 ## Executive status
 
@@ -40,7 +41,7 @@ Implemented and covered by code/tests:
 - revision-safe configuration updates
 - Skill health check
 - generic Management UI Schema
-- six public Management API contracts
+- seven public Management API contracts
 - additive reads of partial legacy member state
 
 ## Current public contracts
@@ -108,6 +109,7 @@ External changes use handoffs. The repository must not directly modify GamerHQ H
 
 ## Current release status
 
-**RELEASED — v0.1.0**
+**v0.1.0 — RELEASED**  
+**v0.2.0 — READY FOR RELEASE**
 
-No production/server deployment is implied by this release.
+No production/server deployment is implied by either status.

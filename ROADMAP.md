@@ -80,6 +80,20 @@ No external repository may be modified from this project. If a compatible Host n
 - [x] tests cover approved public behavior;
 - [ ] downstream Host adoption is verified separately.
 
+### 0.2.0 — Interoperability & repeatability
+
+**Status:** Release candidate
+
+Scope:
+- public external signal API;
+- booster and first-game external achievement mappings;
+- replay-safe signal dedupe;
+- safe repeatable metric and external-signal achievements;
+- additive occurrence tracking;
+- optional GamerHQ Host adoption handoff.
+
+Downstream Host adoption is not a release gate.
+
 ## Milestone 3 — Developer and operator usability
 
 **Status:** Planned  
