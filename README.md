@@ -4,7 +4,7 @@ A portable GamerHQ Skill for configurable XP, levels, achievements and rewards.
 
 **Skill ID:** `progression`  
 **Package:** `gamerhq-skill-xp-progression`  
-**Version:** `0.1.0`  
+**Version:** `0.2.0`  
 **Runtime API:** `1`
 
 ## Purpose
@@ -16,7 +16,8 @@ This repository contains the standalone Progression implementation originally ma
 - Configurable XP sources and daily caps.
 - Deterministic level curve, max level and level previews.
 - Per-member total XP, per-source XP and activity metrics.
-- Stable achievement definitions and threshold unlocks.
+- Declarative metric and external-signal achievement conditions.
+- Repeatable achievements with explicit bounded interval/event semantics.
 - Reward triggers for level, achievement and total XP.
 - Badge, title, XP bonus, role, channel-access and announcement grants.
 - Safe role ownership semantics for pre-existing Discord roles.
@@ -46,6 +47,7 @@ GamerHQ Skill Storage is already scoped by guild ID and Skill ID. Because the Sk
 - `progression.update-config.v1`
 - `progression.preview-level.v1`
 - `progression.record-activity.v1`
+- `progression.record-signal.v1`
 - `progression.member-status.v1`
 
 ## Capabilities
@@ -78,7 +80,7 @@ CI validates Python 3.12 and 3.14, package build/install, `pip check`, tests, so
 
 ## Extraction status
 
-Version `0.1.0` is the extracted baseline of the existing GamerHQ Progression implementation. This repository does not deploy production and does not contain the GamerHQ host adapter.
+Version `0.2.0` extends the released standalone baseline with host-neutral external progression signals and safe repeatable-achievement semantics. This repository does not deploy production and does not contain the GamerHQ host adapter.
 
 ## Repository ownership
 
@@ -86,7 +88,7 @@ This repository owns and releases the Progression Skill independently. GamerHQ H
 
 ## Release status
 
-Version `0.1.0` is the first independently released standalone Progression baseline. The package is compatible with Runtime API `1` and SDK `>=0.1,<0.2`. The published `v0.1.0` release is independent of any GamerHQ Host deployment.
+Version `0.2.0` is the current standalone Progression release candidate. It remains compatible with Runtime API `1` and SDK `>=0.1,<0.2`. The published `v0.1.0` baseline remains immutable and independent of any GamerHQ Host deployment.
 
 ## Releasing
 
