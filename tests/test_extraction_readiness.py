@@ -44,7 +44,7 @@ class StandaloneReadinessTests(unittest.IsolatedAsyncioTestCase):
     def test_identity_management_and_storage_are_frozen(self):
         skill = create_skill()
         self.assertEqual(skill.manifest.id, "progression")
-        self.assertEqual(skill.manifest.version, "0.1.0")
+        self.assertEqual(skill.manifest.version, "0.2.0")
         self.assertEqual(skill.manifest.runtime_api_version, "1")
         self.assertEqual(PROGRESSION_MANAGEMENT_APIS, (
             "progression.status.v1", "progression.get-config.v1",
@@ -78,6 +78,7 @@ class StandaloneReadinessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status["sourceXp"], {})
         self.assertEqual(status["metrics"], {})
         self.assertEqual(status["achievements"], ())
+        self.assertEqual(status["achievementCounts"], {})
         self.assertEqual(status["badges"], ())
         self.assertEqual(status["titles"], ())
         self.assertEqual(status["claimedRewards"], ())
