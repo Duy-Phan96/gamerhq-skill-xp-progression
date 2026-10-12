@@ -78,7 +78,7 @@ No code-coverage percentage is currently measured; do not infer one.
 - chat `cooldownMinutes` is Skill-owned and enforced by `record_activity()` using `occurredAt` plus additive member state
 - voice `requiresOtherHuman` and `excludeAfk` are explicitly Host observation requirements because raw Discord voice-state context is outside this repository
 - locally measurable achievements now use validated declarative `metric_at_least` conditions instead of a hard-coded achievement-ID threshold table
-- `channel_access` currently executes through the same role-grant adapter path as a role reward
+- `channel_access` is explicitly defined as a role-backed access grant in Runtime API 1; direct channel-permission mutation is out of scope without a future public Host capability
 - reward grant payloads are now validated at configuration time instead of deferring malformed IDs/XP values until reward execution
 
 ### Documentation / release gaps
