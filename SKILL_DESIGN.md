@@ -80,3 +80,16 @@ Configuration writes use revision checks to reject stale edits. Activity dedupe 
 ## Achievement rule model
 
 The approved local rule model is documented in [docs/ACHIEVEMENT_RULES.md](docs/ACHIEVEMENT_RULES.md). Locally measurable achievements use declarative metric thresholds. Achievements that depend on external Host state remain inert until a public signal contract exists; the Skill does not inspect Host internals.
+
+## Activity policy ownership
+
+Progression owns deterministic XP economics that can be evaluated from its own payload/state. In Runtime API 1:
+
+- `enabled`, `xp` and `dailyCap` are enforced by Progression;
+- `chat.cooldownMinutes` is enforced by Progression using the supplied `occurredAt` timestamp and additive member state;
+- `voice.windowMinutes` converts trusted voice activity units into Progression-owned `voiceMinutes` metrics;
+- `voice.requiresOtherHuman` and `voice.excludeAfk` are observation requirements for the Host because this package does not receive raw Discord voice-state context.
+
+The Host must submit voice activity only after applying those configured observation requirements. Progression must not inspect Discord.py or Host databases to enforce them.
+
+If a future generic Host cannot consume these observation requirements through an existing public contract, this repository must create a HANDOFF rather than reaching into Host internals.

@@ -131,6 +131,19 @@ class ProgressionConfigTests(unittest.TestCase):
         self.assertEqual(achievement["name"], "Server Booster")
         self.assertEqual(achievement["xp"], 250)
 
+    def test_activity_policy_fields_are_validated_and_normalized(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        config["xpSources"]["chat"]["cooldownMinutes"] = "5"
+        config["xpSources"]["voice"]["windowMinutes"] = "10"
+        config["xpSources"]["voice"]["requiresOtherHuman"] = 1
+        config["xpSources"]["voice"]["excludeAfk"] = 0
+        result = validate_config(config)
+
+        self.assertEqual(result["xpSources"]["chat"]["cooldownMinutes"], 5)
+        self.assertEqual(result["xpSources"]["voice"]["windowMinutes"], 10)
+        self.assertTrue(result["xpSources"]["voice"]["requiresOtherHuman"])
+        self.assertFalse(result["xpSources"]["voice"]["excludeAfk"])
+
     def test_achievement_metric_condition_is_validated(self):
         config = deepcopy(DEFAULT_CONFIG)
         custom = {
@@ -336,6 +349,85 @@ class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(status["totalXp"], 10)
         self.assertEqual(status["sourceXp"]["voice"], 10)
         self.assertEqual(status["metrics"]["voiceMinutes"], 30)
+
+    async def test_chat_cooldown_is_enforced_by_skill(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["xpSources"]["chat"]["cooldownMinutes"] = 5
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        first = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "units": 1,
+                "occurredAt": 1_790_000_000,
+                "dedupeKey": "chat:1:7",
+            },
+        )
+        second = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "units": 1,
+                "occurredAt": 1_790_000_120,
+                "dedupeKey": "chat:2:7",
+            },
+        )
+        third = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "units": 1,
+                "occurredAt": 1_790_000_301,
+                "dedupeKey": "chat:3:7",
+            },
+        )
+
+        self.assertEqual(first["awardedXp"], 3)
+        self.assertEqual(second["awardedXp"], 0)
+        self.assertEqual(second["reason"], "cooldown")
+        self.assertEqual(third["awardedXp"], 3)
+
+    async def test_cooldown_rejection_records_dedupe_key(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["xpSources"]["chat"]["cooldownMinutes"] = 5
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "occurredAt": 1_790_000_000,
+                "dedupeKey": "chat:initial:7",
+            },
+        )
+        cooldown = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "occurredAt": 1_790_000_100,
+                "dedupeKey": "chat:cooldown:7",
+            },
+        )
+        replay = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 7,
+                "source": "chat",
+                "occurredAt": 1_790_000_400,
+                "dedupeKey": "chat:cooldown:7",
+            },
+        )
+
+        self.assertEqual(cooldown["reason"], "cooldown")
+        self.assertEqual(replay["reason"], "duplicate")
 
     async def test_dedupe_key_blocks_duplicate_event_award(self):
         await self.skill.enable(self.ctx)
