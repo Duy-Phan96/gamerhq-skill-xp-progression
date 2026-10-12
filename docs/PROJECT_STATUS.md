@@ -75,8 +75,8 @@ No code-coverage percentage is currently measured; do not infer one.
 ### Product / contract gaps
 - achievement `repeatable: true` remains compatibility-reserved; Rule V1 deliberately does not invent repeated-award semantics without an explicit repeat interval/condition
 - default achievements `server-booster` and `first-game` have definitions but no local automatic unlock path
-- chat `cooldownMinutes` is configurable but not enforced by `record_activity()`
-- voice `requiresOtherHuman` and `excludeAfk` are configurable but not enforced inside this Skill
+- chat `cooldownMinutes` is Skill-owned and enforced by `record_activity()` using `occurredAt` plus additive member state
+- voice `requiresOtherHuman` and `excludeAfk` are explicitly Host observation requirements because raw Discord voice-state context is outside this repository
 - locally measurable achievements now use validated declarative `metric_at_least` conditions instead of a hard-coded achievement-ID threshold table
 - `channel_access` currently executes through the same role-grant adapter path as a role reward
 - reward grant payloads are now validated at configuration time instead of deferring malformed IDs/XP values until reward execution
