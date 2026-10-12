@@ -131,6 +131,58 @@ class ProgressionConfigTests(unittest.TestCase):
         self.assertEqual(achievement["name"], "Server Booster")
         self.assertEqual(achievement["xp"], 250)
 
+    def test_achievement_metric_condition_is_validated(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        custom = {
+            "id": "voice-starter",
+            "name": "Voice Starter",
+            "emoji": "🎙️",
+            "description": "Spend 20 active minutes in voice.",
+            "xp": 10,
+            "enabled": True,
+            "repeatable": False,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+            },
+        }
+        config["achievements"].append(custom)
+        result = validate_config(config)
+        self.assertEqual(
+            result["achievements"][-1]["condition"],
+            {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+            },
+        )
+
+    def test_achievement_condition_rejects_unknown_metric(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        config["achievements"].append({
+            "id": "bad-metric",
+            "name": "Bad Metric",
+            "xp": 10,
+            "enabled": True,
+            "repeatable": False,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "privateHostMetric",
+                "threshold": 1,
+            },
+        })
+        with self.assertRaisesRegex(ValueError, "unsupported metric"):
+            validate_config(config)
+
+    def test_achievement_without_condition_remains_valid(self):
+        result = validate_config(deepcopy(DEFAULT_CONFIG))
+        server_booster = next(
+            item for item in result["achievements"]
+            if item["id"] == "server-booster"
+        )
+        self.assertIsNone(server_booster["condition"])
+
     def test_reward_rules_are_configurable_and_validated(self):
         config = deepcopy(DEFAULT_CONFIG)
         config["rewards"] = [{
@@ -357,6 +409,55 @@ class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             "voice-rookie",
             [item["id"] for item in response["unlockedAchievements"]],
+        )
+
+    async def test_custom_metric_achievement_unlocks_without_code_change(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["achievements"].append({
+            "id": "voice-starter",
+            "name": "Voice Starter",
+            "emoji": "🎙️",
+            "description": "Spend 20 active minutes in voice.",
+            "xp": 10,
+            "enabled": True,
+            "repeatable": False,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+            },
+        })
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        first = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 12,
+                "source": "voice",
+                "units": 1,
+                "occurredAt": 1_790_000_000,
+                "dedupeKey": "voice:custom:1",
+            },
+        )
+        second = await self.skill.record_activity(
+            self.ctx,
+            {
+                "memberId": 12,
+                "source": "voice",
+                "units": 1,
+                "occurredAt": 1_790_000_100,
+                "dedupeKey": "voice:custom:2",
+            },
+        )
+
+        self.assertNotIn(
+            "voice-starter",
+            [item["id"] for item in first["unlockedAchievements"]],
+        )
+        self.assertIn(
+            "voice-starter",
+            [item["id"] for item in second["unlockedAchievements"]],
         )
 
     async def test_disabled_source_awards_nothing(self):
