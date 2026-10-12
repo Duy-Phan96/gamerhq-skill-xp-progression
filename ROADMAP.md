@@ -1,112 +1,93 @@
 # Roadmap
 
-This roadmap records the strategic direction of the independently owned XP & Progression Skill. GitHub Issues should remain the operational task tracker; this file documents outcomes, scope and milestone intent.
+This roadmap records the strategic direction of the independently owned XP & Progression Skill. GitHub Issues remain the operational task tracker; this file documents outcomes, scope and milestone intent.
 
 ## Product direction
 
 Progression is a portable GamerHQ-compatible Skill that owns XP rules, levels, achievements, rewards, Skill-owned state and generic management contracts.
 
-The Skill should remain host-neutral. Host-specific Discord observation, event lifecycle logic and production deployment stay outside this repository.
+The Skill remains host-neutral. Host-specific Discord observation, event lifecycle logic and production deployment stay outside this repository.
 
-## Current release
+## Released baseline
 
-### 0.1.0 — Standalone baseline
+### v0.1.0 — Standalone baseline
 
-**Status:** Final release preparation
+**Status:** RELEASED  
+**Release commit:** `f32d27815b52a5a3cb94c4632904fd5692d3ffd4`
 
-Completed outcomes:
+Delivered:
 - standalone Python package and `gamerhq.skills` entry point
 - stable Skill ID `progression`
 - Runtime API `1`
 - SDK compatibility `>=0.1,<0.2`
 - stable storage keys `config.v1` and `member.v1:<member-id>`
-- configurable XP sources, level curve, achievements, rewards and announcements
-- Management APIs and Management UI Schema
-- activity deduplication and daily XP caps
-- role ownership safety for pre-existing Discord roles
+- configurable XP sources, levels, achievements, rewards and announcements
+- declarative local achievement rules
+- chat cooldown enforcement and explicit Host voice-observation boundary
+- validated reward grants and role-backed channel access semantics
+- generic Management UI Schema
+- bounded activity deduplication and daily XP caps
 - Python 3.12 / 3.14 CI
-- independent release-artifact workflow
+- release artifacts, source distribution and SHA-256 checksums
+- contributor and security guidance
 
-Remaining publication step:
-- merge the final 0.1.0 release-preparation PR with green CI
-- create immutable tag `v0.1.0` on that merge commit
-- publish the GitHub Release
-- verify the tag-triggered artifact workflow on the real release tag
+## Milestone 1 — Standalone baseline
 
-## Milestone 1 — Publish the baseline
+**Status:** Completed
 
-**Status:** In progress  
-**Priority:** P0 / P1
+### Outcome
 
-### Objective
-Turn the reviewed 0.1.0 baseline into an actual immutable public release.
+Progression is independently versioned, released and consumable by a compatible Host without depending on a moving branch.
 
-### User / business value
-Creates a stable version that Hosts and third-party developers can reference without depending on a moving commit.
+## Milestone 2 — Progression interoperability & rule completeness
 
-### Acceptance criteria
-- `v0.1.0` exists and points to the reviewed release commit
-- GitHub Release exists
-- wheel, source distribution and SHA-256 checksums are produced successfully
-- public entry point and manifest identity pass release validation
-
-## Milestone 2 — Contract & behavior consistency
-
-**Status:** Planned  
+**Status:** Active planning  
 **Priority:** P1
 
 ### Objective
-Make every configurable field either enforce real Skill behavior or clearly document that the Host owns the policy.
 
-### Committed review targets
-- decide and document `repeatable` achievement semantics
-- resolve the gap for default achievements such as `server-booster` and `first-game`
-- define ownership of chat cooldown enforcement
-- define ownership of voice eligibility rules such as `requiresOtherHuman` and `excludeAfk`
-- eliminate stale documentation that understates current runtime behavior
-- make the release workflow version-neutral for future releases
+Complete the rule model for progression events that cannot currently be inferred from Progression-owned local metrics.
 
-### Acceptance criteria
-- no configuration field implies behavior that is silently ignored
-- Host-vs-Skill responsibility is explicit
-- compatible behavior remains stable for Runtime API 1
-- tests cover each resolved contract
+### Current gaps
 
-## Milestone 3 — Productized progression rules
+- `server-booster` has no local automatic unlock source.
+- `first-game` has no local automatic unlock source.
+- `repeatable: true` is compatibility-reserved but intentionally has no repeated-award semantics.
+- cross-Skill / Host-originated progression signals need a stable host-neutral contract before they can drive achievements safely.
 
-**Status:** Proposed  
-**Priority:** P1 / P2
+### Planned design work
 
-### Objective
-Reduce hard-coded GamerHQ-specific achievement logic and make progression rules reusable across compatible Hosts.
+- define a bounded public external progression-signal contract;
+- decide whether it belongs in an existing Management API or a new versioned API;
+- define idempotency / dedupe requirements;
+- define which signal types are Progression-owned versus external-provider-owned;
+- define explicit repeatable-achievement semantics before enabling repeated XP.
 
-### Proposed direction
-A declarative rule model may describe:
-- metric or normalized source/event
-- comparison
-- threshold
-- repeatability
-- reward linkage
-
-This is proposed scope, not yet an approved implementation contract.
+No external repository may be modified from this project. If a compatible Host needs to emit a new public signal, create a handoff after the Progression-side contract is defined.
 
 ### Acceptance criteria
-To be defined only after the rule model is explicitly approved.
 
-## Milestone 4 — External developer readiness
+- external achievement triggers no longer depend on private Host knowledge;
+- replay-safe/idempotent signal semantics are defined;
+- existing Runtime API 1 and storage compatibility are preserved where practical;
+- repeatability cannot create ambiguous or uncontrolled repeated XP;
+- tests cover all approved public behavior.
+
+## Milestone 3 — Developer and operator usability
 
 **Status:** Planned  
 **Priority:** P2
 
 ### Objective
-Make the repository understandable and maintainable without prior chat context.
 
-### Candidate deliverables
-- concise `CONTRIBUTING.md`
-- concise `SECURITY.md`
-- example configuration
-- explicit compatibility/release guidance
-- GitHub Issues and Milestones used for substantial work
+Make configuration easier to understand, validate and adopt for third-party operators.
+
+### Candidate outcomes
+
+- example configurations for common community setups;
+- clearer management schema descriptions for achievement conditions and rewards;
+- compatibility examples for Host integrators;
+- release upgrade notes when 0.2.0 is prepared.
 
 ## Future opportunities
 
@@ -116,7 +97,7 @@ Only pursue with demonstrated user value:
 - configuration presets
 - richer analytics
 - Marketplace metadata
-- optional public cross-Skill event consumption
+- additional public cross-Skill events
 
 These are not committed requirements.
 
@@ -132,4 +113,4 @@ This repository does not own:
 - production VPS deployment
 - Runtime / SDK implementation owned by another repository
 
-When a missing upstream contract blocks Progression, create a handoff rather than changing another repository directly.
+When another repository must change, Progression defines the public requirement and creates a handoff rather than modifying that repository directly.
