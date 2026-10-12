@@ -692,10 +692,12 @@ class ProgressionSkill:
             if not condition:
                 # Definitions without local conditions require an external public signal.
                 continue
-            if condition["type"] == "metric_at_least":
-                metric_value = int(state["metrics"].get(condition["metric"], 0))
-                if metric_value < int(condition["threshold"]):
-                    continue
+            if condition["type"] != "metric_at_least":
+                # External-signal achievements are evaluated only by record_signal().
+                continue
+            metric_value = int(state["metrics"].get(condition["metric"], 0))
+            if metric_value < int(condition["threshold"]):
+                continue
             owned.add(achievement_id)
             state["achievements"].append(achievement_id)
             bonus = int(achievement["xp"])
