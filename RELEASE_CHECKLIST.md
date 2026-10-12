@@ -18,17 +18,23 @@ This checklist determines whether **this Skill** is ready for its own release. D
 - [x] Public Management API compatibility has been reviewed.
 - [x] Storage keys and migration behavior have been reviewed.
 - [x] Partial/legacy member state remains compatible without normalization writes.
+- [x] Achievement rule semantics are documented and tested.
+- [x] Activity policy ownership is documented and tested.
+- [x] Reward grant payloads are validated at config time.
+- [x] Channel-access semantics are documented and tested.
 - [x] Capability/security set has been explicitly reviewed.
-- [x] CHANGELOG reflects this Skill release.
+- [x] CHANGELOG reflects the final 0.1.0 scope.
+- [x] RELEASE_NOTES reflect the final 0.1.0 scope.
 - [x] Package version is `0.1.0`.
+- [x] Release workflow is version-neutral.
 - [x] Rollback/upgrade compatibility for Skill-owned state is understood.
-- [x] No missing upstream contract currently blocks this release.
+- [x] No missing upstream contract blocks publication.
 
 ## Release status
 
-**READY FOR RELEASE**
+**READY FOR FINAL RELEASE PR**
 
-Final publication requires an immutable release tag/artifact for the reviewed `main` commit.
+After this final release-preparation PR is merged and CI is green, its merge commit becomes the immutable publication target for tag `v0.1.0`.
 
 ## Downstream adoption
 
