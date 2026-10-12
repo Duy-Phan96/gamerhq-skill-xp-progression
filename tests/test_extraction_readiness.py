@@ -49,7 +49,8 @@ class StandaloneReadinessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(PROGRESSION_MANAGEMENT_APIS, (
             "progression.status.v1", "progression.get-config.v1",
             "progression.update-config.v1", "progression.preview-level.v1",
-            "progression.record-activity.v1", "progression.member-status.v1",
+            "progression.record-activity.v1", "progression.record-signal.v1",
+            "progression.member-status.v1",
         ))
         self.assertEqual(tuple(c.id for c in skill.manifest.management_apis.exposes), PROGRESSION_MANAGEMENT_APIS)
         self.assertEqual(CONFIG_KEY, "config.v1")

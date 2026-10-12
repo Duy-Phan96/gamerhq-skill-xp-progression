@@ -31,6 +31,7 @@ GET_CONFIG_API = "progression.get-config.v1"
 UPDATE_CONFIG_API = "progression.update-config.v1"
 PREVIEW_LEVEL_API = "progression.preview-level.v1"
 RECORD_ACTIVITY_API = "progression.record-activity.v1"
+RECORD_SIGNAL_API = "progression.record-signal.v1"
 MEMBER_STATUS_API = "progression.member-status.v1"
 
 PROGRESSION_MANAGEMENT_APIS = (
@@ -39,6 +40,7 @@ PROGRESSION_MANAGEMENT_APIS = (
     UPDATE_CONFIG_API,
     PREVIEW_LEVEL_API,
     RECORD_ACTIVITY_API,
+    RECORD_SIGNAL_API,
     MEMBER_STATUS_API,
 )
 
@@ -163,6 +165,11 @@ DEFAULT_CONFIG = {
             "xp": 250,
             "enabled": True,
             "repeatable": False,
+            "condition": {
+                "type": "external_signal",
+                "provider": "discord",
+                "signal": "server_boosted",
+            },
         },
         {
             "id": "first-game",
@@ -172,6 +179,11 @@ DEFAULT_CONFIG = {
             "xp": 25,
             "enabled": True,
             "repeatable": False,
+            "condition": {
+                "type": "external_signal",
+                "provider": "profile",
+                "signal": "first_game_added",
+            },
         },
         {
             "id": "first-mate",
@@ -289,6 +301,14 @@ def _positive_int(value: Any, name: str, *, minimum: int = 1, maximum: int = 1_0
     return value
 
 
+def _bounded_identifier(value: Any, name: str, *, maximum: int = 80) -> str:
+    value = str(value or "").strip().lower()
+    allowed = set("abcdefghijklmnopqrstuvwxyz0123456789._-")
+    if not value or len(value) > maximum or any(char not in allowed for char in value):
+        raise ValueError(f"{name} must use 1-{maximum} lowercase identifier characters")
+    return value
+
+
 def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
     config = deepcopy(dict(value))
     config["revision"] = _positive_int(config.get("revision", 1), "revision")
@@ -353,18 +373,29 @@ def validate_config(value: Mapping[str, Any]) -> dict[str, Any]:
                 raise ValueError(f"achievement {achievement_id} condition must be an object")
             condition = dict(condition)
             condition_type = str(condition.get("type", "")).strip()
-            if condition_type != "metric_at_least":
+            if condition_type == "metric_at_least":
+                metric = str(condition.get("metric", "")).strip()
+                allowed_metrics = {"voiceMinutes", "lfgParticipations", "eventsHosted"}
+                if metric not in allowed_metrics:
+                    raise ValueError(f"achievement {achievement_id} references an unsupported metric")
+                condition["type"] = condition_type
+                condition["metric"] = metric
+                condition["threshold"] = _positive_int(
+                    condition.get("threshold"),
+                    f"achievement {achievement_id} threshold",
+                )
+            elif condition_type == "external_signal":
+                condition["type"] = condition_type
+                condition["provider"] = _bounded_identifier(
+                    condition.get("provider"),
+                    f"achievement {achievement_id} provider",
+                )
+                condition["signal"] = _bounded_identifier(
+                    condition.get("signal"),
+                    f"achievement {achievement_id} signal",
+                )
+            else:
                 raise ValueError(f"achievement {achievement_id} has an unsupported condition")
-            metric = str(condition.get("metric", "")).strip()
-            allowed_metrics = {"voiceMinutes", "lfgParticipations", "eventsHosted"}
-            if metric not in allowed_metrics:
-                raise ValueError(f"achievement {achievement_id} references an unsupported metric")
-            condition["type"] = condition_type
-            condition["metric"] = metric
-            condition["threshold"] = _positive_int(
-                condition.get("threshold"),
-                f"achievement {achievement_id} threshold",
-            )
             item["condition"] = condition
         achievements.append(item)
     config["achievements"] = achievements
@@ -475,6 +506,7 @@ class ProgressionSkill:
         ctx.management.expose(UPDATE_CONFIG_API, self.update_config)
         ctx.management.expose(PREVIEW_LEVEL_API, self.preview_level)
         ctx.management.expose(RECORD_ACTIVITY_API, self.record_activity)
+        ctx.management.expose(RECORD_SIGNAL_API, self.record_signal)
         ctx.management.expose(MEMBER_STATUS_API, self.member_status)
 
     async def enable(self, ctx) -> None:
@@ -543,6 +575,7 @@ class ProgressionSkill:
             "lastActivity": dict(state.get("lastActivity") or {}),
             "achievements": list(state.get("achievements") or []),
             "seenActivity": list(state.get("seenActivity") or []),
+            "seenSignals": list(state.get("seenSignals") or []),
             "badges": list(state.get("badges") or []),
             "titles": list(state.get("titles") or []),
             "claimedRewards": list(state.get("claimedRewards") or []),
@@ -659,10 +692,12 @@ class ProgressionSkill:
             if not condition:
                 # Definitions without local conditions require an external public signal.
                 continue
-            if condition["type"] == "metric_at_least":
-                metric_value = int(state["metrics"].get(condition["metric"], 0))
-                if metric_value < int(condition["threshold"]):
-                    continue
+            if condition["type"] != "metric_at_least":
+                # External-signal achievements are evaluated only by record_signal().
+                continue
+            metric_value = int(state["metrics"].get(condition["metric"], 0))
+            if metric_value < int(condition["threshold"]):
+                continue
             owned.add(achievement_id)
             state["achievements"].append(achievement_id)
             bonus = int(achievement["xp"])
@@ -795,6 +830,213 @@ class ProgressionSkill:
             "unlockedAchievements": tuple(unlocked),
             "rewardEvents": tuple(reward_events),
             "announcementSent": announcement_sent,
+        }
+
+    async def record_signal(self, ctx, payload) -> Mapping[str, Any]:
+        member_id = _positive_int(payload.get("memberId"), "memberId")
+        provider = _bounded_identifier(payload.get("provider"), "provider")
+        signal = _bounded_identifier(payload.get("signal"), "signal")
+        dedupe_key = str(payload.get("dedupeKey", "")).strip()
+        if not dedupe_key or len(dedupe_key) > 160:
+            raise ValueError("dedupeKey is required and must be at most 160 characters")
+        occurred_at = _positive_int(
+            payload.get("occurredAt", 0),
+            "occurredAt",
+            minimum=0,
+            maximum=4_102_444_800,
+        )
+        if occurred_at == 0:
+            occurred_at = int(datetime.now(timezone.utc).timestamp())
+
+        config = await self._config(ctx)
+        state = await self._member_state(ctx, member_id)
+        if dedupe_key in state["seenSignals"]:
+            level, current, needed = level_for_xp(
+                state["totalXp"],
+                config["levelCurve"],
+            )
+            return {
+                "memberId": member_id,
+                "provider": provider,
+                "signal": signal,
+                "reason": "duplicate",
+                "unlockedAchievements": (),
+                "rewardEvents": (),
+                "totalXp": state["totalXp"],
+                "level": level,
+                "currentLevelXp": current,
+                "xpToNextLevel": needed,
+                "announcementSent": False,
+            }
+
+        state["seenSignals"].append(dedupe_key)
+        state["seenSignals"] = state["seenSignals"][-500:]
+        previous_level = level_for_xp(state["totalXp"], config["levelCurve"])[0]
+
+        unlocked = []
+        owned = set(state["achievements"])
+        for achievement in config["achievements"]:
+            if not achievement.get("enabled") or achievement["id"] in owned:
+                continue
+            condition = achievement.get("condition")
+            if not condition or condition.get("type") != "external_signal":
+                continue
+            if condition["provider"] != provider or condition["signal"] != signal:
+                continue
+            achievement_id = achievement["id"]
+            owned.add(achievement_id)
+            state["achievements"].append(achievement_id)
+            bonus = int(achievement["xp"])
+            state["totalXp"] += bonus
+            state["sourceXp"]["achievement"] = int(
+                state["sourceXp"].get("achievement", 0)
+            ) + bonus
+            unlocked.append({
+                "id": achievement_id,
+                "name": achievement["name"],
+                "emoji": achievement.get("emoji", ""),
+                "xp": bonus,
+            })
+
+        reward_events = []
+        claimed = set(state["claimedRewards"])
+        level_before_rewards = level_for_xp(
+            state["totalXp"],
+            config["levelCurve"],
+        )[0]
+        for reward in config["rewards"]:
+            if not reward.get("enabled") or reward["id"] in claimed:
+                continue
+            trigger = reward["trigger"]
+            matched = (
+                (trigger["type"] == "level" and level_before_rewards >= int(trigger["level"]))
+                or (trigger["type"] == "xp" and state["totalXp"] >= int(trigger["xp"]))
+                or (
+                    trigger["type"] == "achievement"
+                    and trigger["achievementId"] in state["achievements"]
+                )
+            )
+            if not matched:
+                continue
+            grants_applied = []
+            for grant in reward["grants"]:
+                kind = grant["type"]
+                if kind == "badge":
+                    badge_id = grant["badgeId"]
+                    if badge_id not in state["badges"]:
+                        state["badges"].append(badge_id)
+                        grants_applied.append({"type": "badge", "value": badge_id})
+                elif kind == "title":
+                    title = grant["title"]
+                    if title not in state["titles"]:
+                        state["titles"].append(title)
+                        grants_applied.append({"type": "title", "value": title})
+                elif kind == "xp_bonus":
+                    bonus = int(grant["xp"])
+                    state["totalXp"] += bonus
+                    state["sourceXp"]["reward"] = int(
+                        state["sourceXp"].get("reward", 0)
+                    ) + bonus
+                    grants_applied.append({"type": "xp_bonus", "xp": bonus})
+                elif kind in {"role", "channel_access"}:
+                    role_id = int(grant["roleId"])
+                    added = await ctx.discord.grant_role(
+                        member_id=member_id,
+                        role_id=role_id,
+                    )
+                    grants_applied.append({
+                        "type": kind,
+                        "roleId": role_id,
+                        "owned": bool(added),
+                    })
+                    if added:
+                        ownership = f"{reward['id']}:{role_id}"
+                        if ownership not in state["ownedRoleGrants"]:
+                            state["ownedRoleGrants"].append(ownership)
+                elif kind == "announcement":
+                    grants_applied.append({"type": "announcement"})
+            if grants_applied:
+                state["claimedRewards"].append(reward["id"])
+                claimed.add(reward["id"])
+                reward_events.append({
+                    "id": reward["id"],
+                    "name": reward["name"],
+                    "grants": tuple(grants_applied),
+                })
+
+        await ctx.storage.set(MEMBER_KEY_PREFIX + str(member_id), state)
+        await ctx.audit.write(
+            action="progression.signal.recorded",
+            target=str(member_id),
+            metadata={"provider": provider, "signal": signal},
+        )
+        for achievement in unlocked:
+            await ctx.audit.write(
+                action="progression.achievement.unlocked",
+                target=str(member_id),
+                metadata={
+                    "achievement": achievement["id"],
+                    "xp": achievement["xp"],
+                    "provider": provider,
+                    "signal": signal,
+                },
+            )
+
+        level, current, needed = level_for_xp(
+            state["totalXp"],
+            config["levelCurve"],
+        )
+        announcements = config["announcements"]
+        announcement_sent = False
+        if announcements.get("enabled") and announcements.get("channelId"):
+            primary_achievement = unlocked[0] if unlocked else {}
+            primary_reward = reward_events[0] if reward_events else {}
+            should_send = (
+                (unlocked and announcements.get("achievement"))
+                or (reward_events and announcements.get("reward"))
+                or (level > previous_level and announcements.get("levelUp"))
+            )
+            if should_send:
+                member = await ctx.discord.get_member(member_id=member_id)
+                values = {
+                    "member": member.display_name,
+                    "member_id": str(member_id),
+                    "level": str(level),
+                    "xp": str(sum(int(item.get("xp", 0)) for item in unlocked)),
+                    "total_xp": str(state["totalXp"]),
+                    "achievement_name": str(primary_achievement.get("name", "")),
+                    "achievement_emoji": str(primary_achievement.get("emoji", "")),
+                    "reward_name": str(primary_reward.get("name", "")),
+                }
+                message = announcements.get("template", "")
+                for key, value in values.items():
+                    message = message.replace("{" + key + "}", value)
+                if message.strip():
+                    await ctx.discord.send_message(
+                        channel_id=int(announcements["channelId"]),
+                        content=message[:2000],
+                        allowed_mentions={
+                            "everyone": False,
+                            "users": False,
+                            "roles": False,
+                            "replied_user": False,
+                        },
+                    )
+                    announcement_sent = True
+
+        return {
+            "memberId": member_id,
+            "provider": provider,
+            "signal": signal,
+            "reason": "handled" if unlocked or reward_events else "unhandled",
+            "unlockedAchievements": tuple(unlocked),
+            "rewardEvents": tuple(reward_events),
+            "totalXp": state["totalXp"],
+            "level": level,
+            "currentLevelXp": current,
+            "xpToNextLevel": needed,
+            "announcementSent": announcement_sent,
+            "occurredAt": occurred_at,
         }
 
     async def preview_level(self, ctx, payload) -> Mapping[str, Any]:

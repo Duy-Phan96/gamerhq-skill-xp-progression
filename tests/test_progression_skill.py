@@ -188,13 +188,30 @@ class ProgressionConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported metric"):
             validate_config(config)
 
-    def test_achievement_without_condition_remains_valid(self):
+    def test_external_signal_achievement_condition_is_validated(self):
         result = validate_config(deepcopy(DEFAULT_CONFIG))
         server_booster = next(
             item for item in result["achievements"]
             if item["id"] == "server-booster"
         )
-        self.assertIsNone(server_booster["condition"])
+        self.assertEqual(
+            server_booster["condition"],
+            {
+                "type": "external_signal",
+                "provider": "discord",
+                "signal": "server_boosted",
+            },
+        )
+
+    def test_external_signal_condition_rejects_invalid_identifier(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        achievement = next(
+            item for item in config["achievements"]
+            if item["id"] == "server-booster"
+        )
+        achievement["condition"]["signal"] = "BAD SIGNAL!"
+        with self.assertRaisesRegex(ValueError, "identifier characters"):
+            validate_config(config)
 
     def test_reward_rules_are_configurable_and_validated(self):
         config = deepcopy(DEFAULT_CONFIG)
@@ -551,6 +568,104 @@ class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
             "voice-starter",
             [item["id"] for item in second["unlockedAchievements"]],
         )
+
+    async def test_external_signal_unlocks_configured_achievement_once(self):
+        await self.skill.enable(self.ctx)
+        first = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 21,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "discord:boost:21:1",
+                "occurredAt": 1_790_000_000,
+            },
+        )
+        replay = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 21,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "discord:boost:21:1",
+                "occurredAt": 1_790_000_001,
+            },
+        )
+        status = await self.skill.member_status(self.ctx, {"memberId": 21})
+
+        self.assertEqual(first["reason"], "handled")
+        self.assertIn(
+            "server-booster",
+            [item["id"] for item in first["unlockedAchievements"]],
+        )
+        self.assertEqual(replay["reason"], "duplicate")
+        self.assertIn("server-booster", status["achievements"])
+
+    async def test_external_signal_can_trigger_achievement_reward(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["rewards"] = [{
+            "id": "booster-title",
+            "name": "Booster Title",
+            "trigger": {
+                "type": "achievement",
+                "achievementId": "server-booster",
+            },
+            "grants": [{"type": "title", "title": "Booster"}],
+            "enabled": True,
+        }]
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        response = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 22,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "discord:boost:22:1",
+            },
+        )
+        status = await self.skill.member_status(self.ctx, {"memberId": 22})
+
+        self.assertEqual(response["rewardEvents"][0]["id"], "booster-title")
+        self.assertIn("Booster", status["titles"])
+
+    async def test_unknown_external_signal_is_bounded_and_replay_safe(self):
+        await self.skill.enable(self.ctx)
+        first = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 23,
+                "provider": "community",
+                "signal": "unknown_event",
+                "dedupeKey": "community:unknown:23:1",
+            },
+        )
+        replay = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 23,
+                "provider": "community",
+                "signal": "unknown_event",
+                "dedupeKey": "community:unknown:23:1",
+            },
+        )
+
+        self.assertEqual(first["reason"], "unhandled")
+        self.assertEqual(first["unlockedAchievements"], ())
+        self.assertEqual(replay["reason"], "duplicate")
+
+    async def test_external_signal_requires_dedupe_key(self):
+        await self.skill.enable(self.ctx)
+        with self.assertRaisesRegex(ValueError, "dedupeKey is required"):
+            await self.skill.record_signal(
+                self.ctx,
+                {
+                    "memberId": 24,
+                    "provider": "profile",
+                    "signal": "first_game_added",
+                },
+            )
 
     async def test_disabled_source_awards_nothing(self):
         await self.skill.enable(self.ctx)
