@@ -2,12 +2,12 @@
 
 This checklist determines whether **this Skill** is ready for its own 0.2.0 release. Downstream Host adoption is not a release gate.
 
-- [ ] Python 3.12 release-branch CI passes.
-- [ ] Python 3.14 release-branch CI passes.
-- [ ] Package builds successfully.
-- [ ] Built wheel installs successfully.
-- [ ] `pip check` passes.
-- [ ] Full standalone pytest suite passes.
+- [x] Python 3.12 release-branch CI passes.
+- [x] Python 3.14 release-branch CI passes.
+- [x] Package builds successfully.
+- [x] Built wheel installs successfully.
+- [x] `pip check` passes.
+- [x] Full standalone pytest suite passes.
 - [x] Source portability boundary remains intact.
 - [x] Skill ID remains `progression`.
 - [x] Runtime API remains `1`.
@@ -30,9 +30,9 @@ This checklist determines whether **this Skill** is ready for its own 0.2.0 rele
 
 ## Release status
 
-**RELEASE CANDIDATE — CI PENDING**
+**READY FOR RELEASE**
 
-After this release branch is fully green, update this checklist to READY FOR RELEASE and merge the final release PR. The resulting reviewed `main` commit becomes the intended target for tag `v0.2.0`.
+The release branch is fully green. Merge the reviewed release PR only after the final documentation-only head also passes CI. The resulting reviewed `main` commit becomes the intended target for tag `v0.2.0`.
 
 ## Downstream adoption
 
