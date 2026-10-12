@@ -213,6 +213,41 @@ class ProgressionConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "identifier characters"):
             validate_config(config)
 
+    def test_repeatable_metric_achievement_requires_repeat_every(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        config["achievements"].append({
+            "id": "repeat-voice",
+            "name": "Repeat Voice",
+            "xp": 5,
+            "enabled": True,
+            "repeatable": True,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+            },
+        })
+        with self.assertRaisesRegex(ValueError, "repeatEvery"):
+            validate_config(config)
+
+    def test_nonrepeatable_achievement_rejects_repeat_every(self):
+        config = deepcopy(DEFAULT_CONFIG)
+        config["achievements"].append({
+            "id": "bad-repeat",
+            "name": "Bad Repeat",
+            "xp": 5,
+            "enabled": True,
+            "repeatable": False,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+                "repeatEvery": 20,
+            },
+        })
+        with self.assertRaisesRegex(ValueError, "requires repeatable=true"):
+            validate_config(config)
+
     def test_reward_rules_are_configurable_and_validated(self):
         config = deepcopy(DEFAULT_CONFIG)
         config["rewards"] = [{
@@ -568,6 +603,92 @@ class ProgressionSkillTests(unittest.IsolatedAsyncioTestCase):
             "voice-starter",
             [item["id"] for item in second["unlockedAchievements"]],
         )
+
+    async def test_repeatable_metric_achievement_uses_explicit_intervals(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        config["achievements"].append({
+            "id": "voice-repeat",
+            "name": "Voice Repeat",
+            "xp": 10,
+            "enabled": True,
+            "repeatable": True,
+            "condition": {
+                "type": "metric_at_least",
+                "metric": "voiceMinutes",
+                "threshold": 20,
+                "repeatEvery": 20,
+            },
+        })
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        responses = []
+        for index in range(4):
+            responses.append(await self.skill.record_activity(
+                self.ctx,
+                {
+                    "memberId": 30,
+                    "source": "voice",
+                    "units": 1,
+                    "occurredAt": 1_790_000_000 + index,
+                    "dedupeKey": f"voice:repeat:{index}",
+                },
+            ))
+
+        self.assertNotIn("voice-repeat", [x["id"] for x in responses[0]["unlockedAchievements"]])
+        self.assertIn("voice-repeat", [x["id"] for x in responses[1]["unlockedAchievements"]])
+        self.assertNotIn("voice-repeat", [x["id"] for x in responses[2]["unlockedAchievements"]])
+        repeated = next(
+            x for x in responses[3]["unlockedAchievements"]
+            if x["id"] == "voice-repeat"
+        )
+        self.assertEqual(repeated["totalOccurrences"], 2)
+        status = await self.skill.member_status(self.ctx, {"memberId": 30})
+        self.assertEqual(status["achievementCounts"]["voice-repeat"], 2)
+
+    async def test_repeatable_external_signal_awards_once_per_unique_event(self):
+        await self.skill.enable(self.ctx)
+        config = deepcopy(DEFAULT_CONFIG)
+        booster = next(
+            item for item in config["achievements"]
+            if item["id"] == "server-booster"
+        )
+        booster["repeatable"] = True
+        await self.skill.update_config(self.ctx, {"config": config})
+
+        first = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 31,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "boost:31:1",
+            },
+        )
+        duplicate = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 31,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "boost:31:1",
+            },
+        )
+        second = await self.skill.record_signal(
+            self.ctx,
+            {
+                "memberId": 31,
+                "provider": "discord",
+                "signal": "server_boosted",
+                "dedupeKey": "boost:31:2",
+            },
+        )
+
+        self.assertEqual(first["unlockedAchievements"][0]["totalOccurrences"], 1)
+        self.assertEqual(duplicate["reason"], "duplicate")
+        self.assertEqual(second["unlockedAchievements"][0]["totalOccurrences"], 2)
+        status = await self.skill.member_status(self.ctx, {"memberId": 31})
+        self.assertEqual(status["achievementCounts"]["server-booster"], 2)
 
     async def test_external_signal_unlocks_configured_achievement_once(self):
         await self.skill.enable(self.ctx)
