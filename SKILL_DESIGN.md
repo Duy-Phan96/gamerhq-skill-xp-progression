@@ -93,3 +93,17 @@ Progression owns deterministic XP economics that can be evaluated from its own p
 The Host must submit voice activity only after applying those configured observation requirements. Progression must not inspect Discord.py or Host databases to enforce them.
 
 If a future generic Host cannot consume these observation requirements through an existing public contract, this repository must create a HANDOFF rather than reaching into Host internals.
+
+## Channel access reward semantics
+
+In Runtime API 1, `channel_access` is intentionally a **role-backed access grant**, not a direct Discord channel-permission mutation.
+
+Contract:
+- the grant uses `roleId`;
+- Progression calls the public role-grant adapter;
+- the Host remains responsible for mapping that role to channel permissions;
+- Progression tracks ownership only when it actually added the role;
+- a pre-existing member role is never claimed as Progression-owned;
+- disabling or removing the reward does not automatically revoke pre-existing access.
+
+This keeps the Skill inside the existing `discord.roles.manage` capability and avoids inventing a new channel-permission capability. If future product requirements need direct per-member channel overrides, that would require a separate public Host capability and a HANDOFF rather than private Host access.
