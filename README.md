@@ -91,3 +91,7 @@ Version `0.1.0` is the first independently releasable standalone Progression bas
 ## Releasing
 
 See [RELEASES.md](RELEASES.md) for the independent tag and artifact workflow. Tagged releases build reproducible wheel/source artifacts and checksums without deploying any Host.
+
+## Project planning
+
+See [ROADMAP.md](ROADMAP.md) for milestones and scope, and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for the current verified project snapshot.
