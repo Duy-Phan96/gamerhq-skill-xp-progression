@@ -95,3 +95,7 @@ See [RELEASES.md](RELEASES.md) for the independent tag and artifact workflow. Ta
 ## Project planning
 
 See [ROADMAP.md](ROADMAP.md) for milestones and scope, and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for the current verified project snapshot.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [SECURITY.md](SECURITY.md) for security boundaries and vulnerability reporting guidance.
