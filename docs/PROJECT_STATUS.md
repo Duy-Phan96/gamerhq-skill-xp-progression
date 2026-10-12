@@ -4,7 +4,7 @@
 **Repository:** `Duy-Phan96/gamerhq-skill-xp-progression`  
 **Current package version:** `0.1.0`  
 **Maturity:** Alpha / release-ready baseline  
-**Current main:** `f0d589136854d2f62c11ca1e0a01d0126bc893a6`
+**Current main at release-finalization start:** `9e82dfcbccea614aaf760a681939359889198b0a`
 
 ## Executive status
 
@@ -21,7 +21,7 @@ Implemented and covered by code/tests:
 - daily XP caps
 - bounded activity deduplication
 - member metrics
-- achievement unlocks for current hard-coded metric thresholds
+- declarative `metric_at_least` achievement unlocks for Progression-owned metrics
 - level / XP / achievement reward triggers
 - badge, title, XP bonus and role-based grants
 - safe ownership tracking for role grants
@@ -62,8 +62,8 @@ Implemented and covered by code/tests:
 ## Quality evidence
 
 Latest reviewed CI evidence:
-- Python 3.12: 31 tests passed
-- Python 3.14: 31 tests passed
+- Python 3.12: 41 tests passed, 5 subtests passed
+- Python 3.14: 41 tests passed, 5 subtests passed
 - package build: pass
 - wheel install: pass
 - `pip check`: pass
@@ -83,8 +83,7 @@ No code-coverage percentage is currently measured; do not infer one.
 
 ### Documentation / release gaps
 - no Git tag or GitHub Release exists yet for 0.1.0
-- the tag release workflow still contains a fixed `0.1.0` manifest-version assertion and must become version-neutral before the next version
-- no formal Issue backlog existed at the time of this snapshot
+- GitHub Issues now track the operational backlog; issues #14, #15, #16 and #17 were completed from the audit findings
 
 ## Product strategy
 

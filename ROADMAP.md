@@ -12,7 +12,7 @@ The Skill should remain host-neutral. Host-specific Discord observation, event l
 
 ### 0.1.0 — Standalone baseline
 
-**Status:** Ready for publication
+**Status:** Final release preparation
 
 Completed outcomes:
 - standalone Python package and `gamerhq.skills` entry point
@@ -28,7 +28,8 @@ Completed outcomes:
 - independent release-artifact workflow
 
 Remaining publication step:
-- create immutable tag `v0.1.0`
+- merge the final 0.1.0 release-preparation PR with green CI
+- create immutable tag `v0.1.0` on that merge commit
 - publish the GitHub Release
 - verify the tag-triggered artifact workflow on the real release tag
 
