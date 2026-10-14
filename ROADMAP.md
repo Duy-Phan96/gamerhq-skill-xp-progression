@@ -41,7 +41,7 @@ Progression is independently versioned, released and consumable by a compatible 
 
 ## Milestone 2 — Progression interoperability & rule completeness
 
-**Status:** Core implementation complete / downstream adoption pending  
+**Status:** Completed  
 **Priority:** P1
 
 ### Objective
@@ -54,7 +54,7 @@ Complete the rule model for progression events that cannot currently be inferred
 - `server-booster` maps to `discord/server_boosted`;
 - `first-game` maps to `profile/first_game_added`;
 - repeatable achievements have explicit safe semantics;
-- compatible Hosts still need adapters that emit the public signals.
+- GamerHQ `develop` now emits the public signals through the reviewed Host adapter.
 
 ### Completed design work
 
@@ -67,9 +67,16 @@ Complete the rule model for progression events that cannot currently be inferred
 
 ### Downstream adoption
 
-A compatible Host may independently add adapters for these public signals. See `docs/HANDOFF_GAMERHQ_SIGNALS.md` for the current GamerHQ handoff.
+GamerHQ adopted the released 0.2 contract through PR #148, merged to `develop` as `f2c237dd76133484e9a2f70ea8161c8a573b2100`.
 
-No external repository may be modified from this project. If a compatible Host needs to emit a new public signal, create a handoff after the Progression-side contract is defined.
+The Host:
+- pins Progression v0.2.0 immutably;
+- emits `discord/server_boosted`;
+- emits `profile/first_game_added`;
+- preserves replay-safe dedupe keys;
+- treats missing/disabled Progression as non-fatal.
+
+This verifies the public contract against the reference Host. Production deployment remains a separate GamerHQ release decision.
 
 ### Acceptance criteria
 
@@ -78,11 +85,11 @@ No external repository may be modified from this project. If a compatible Host n
 - [x] Runtime API 1 and storage compatibility are preserved;
 - [x] repeatability is bounded and explicit;
 - [x] tests cover approved public behavior;
-- [ ] downstream Host adoption is verified separately.
+- [x] downstream Host adoption is verified in GamerHQ `develop`.
 
 ### 0.2.0 — Interoperability & repeatability
 
-**Status:** Release candidate
+**Status:** RELEASED / reference Host integration verified
 
 Scope:
 - public external signal API;
