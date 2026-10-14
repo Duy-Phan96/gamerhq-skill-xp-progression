@@ -2,24 +2,27 @@
 
 **Snapshot date:** 2026-10-12  
 **Repository:** `Duy-Phan96/gamerhq-skill-xp-progression`  
-**Released version:** `v0.1.0`  
-**Release candidate:** `0.2.0`  
-**Release commit:** `f32d27815b52a5a3cb94c4632904fd5692d3ffd4`  
-**Maturity:** Released Alpha / 0.2.0 release candidate
+**Released version:** `v0.2.0`  
+**Release commit:** `b8226977adad5ea966f77805f6a4c0f56b78be17`  
+**Maturity:** Released Alpha / verified GamerHQ develop integration
 
 ## Executive status
 
-The standalone Progression extraction is complete and `v0.1.0` is officially released.
+The standalone Progression Skill is released as `v0.2.0`, and GamerHQ `develop` now consumes that immutable release through the public signal contract.
 
 Verified release state:
-- annotated tag `v0.1.0` points to the approved release commit;
+- annotated tag `v0.2.0` points to `b8226977adad5ea966f77805f6a4c0f56b78be17`;
 - GitHub Release exists;
-- wheel is published;
-- source distribution is published;
-- `SHA256SUMS.txt` is published;
-- release issue #13 is completed.
+- wheel, source distribution and `SHA256SUMS.txt` are published;
+- release issue #30 is completed.
 
-The repository can now move into 0.2.0 development without changing the immutable 0.1.0 baseline.
+Verified downstream adoption:
+- GamerHQ PR #148 merged into `develop`;
+- GamerHQ merge commit `f2c237dd76133484e9a2f70ea8161c8a573b2100`;
+- GamerHQ emits the booster and first-game public signals;
+- GamerHQ CI is green on Python 3.12 and 3.14.
+
+This does not mean GamerHQ production has been deployed.
 
 ## Verified implementation
 
@@ -49,7 +52,7 @@ Implemented and covered by code/tests:
 ### Identity
 - Skill ID: `progression`
 - Runtime API: `1`
-- released version: `0.1.0`
+- released version: `0.2.0`
 - SDK: `>=0.1,<0.2`
 
 ### Storage
@@ -85,21 +88,22 @@ No code-coverage percentage is currently measured; do not infer one.
 
 ## Remaining product gaps
 
-Progression-side 0.2 contract work is complete:
-- repeatable achievements use explicit bounded semantics;
-- `server-booster` maps to `discord/server_boosted`;
-- `first-game` maps to `profile/first_game_added`;
-- `progression.record-signal.v1` is bounded and replay-safe.
+The 0.2 interoperability milestone is complete for the Progression Skill and verified against GamerHQ `develop`.
 
-Remaining gap is downstream adoption: a compatible Host must choose to emit those public signals. This is not a blocker for an independent Progression release.
+Remaining work is product evolution rather than a contract blocker:
+- broader operator examples/presets;
+- post-0.2 usability improvements;
+- future features such as leaderboards/seasons only when justified by usage.
+
+GamerHQ production adoption remains pending its normal Host release/deployment lifecycle.
 
 ## Current strategy
 
 Next focus:
-1. prepare the standalone `0.2.0` release;
-2. preserve the public compatibility guarantees;
-3. hand off optional GamerHQ signal-adapter adoption;
-4. defer broad growth features until post-0.2 usage justifies them.
+1. preserve the released 0.2 public compatibility guarantees;
+2. improve developer/operator usability and examples;
+3. evaluate the next product milestone using real user value;
+4. keep GamerHQ production rollout independent from Skill development.
 
 ## Repository ownership
 
@@ -109,7 +113,8 @@ External changes use handoffs. The repository must not directly modify GamerHQ H
 
 ## Current release status
 
-**v0.1.0 — RELEASED**  
-**v0.2.0 — READY FOR RELEASE**
+**v0.2.0 — RELEASED**  
+**GamerHQ `develop` integration — VERIFIED**  
+**GamerHQ production deployment — NOT PERFORMED**
 
-No production/server deployment is implied by either status.
+The immutable v0.1.0 release remains available as the previous baseline.
