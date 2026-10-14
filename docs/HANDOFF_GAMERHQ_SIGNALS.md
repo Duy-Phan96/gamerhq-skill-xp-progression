@@ -60,10 +60,10 @@ Add Host-side adapters that call `progression.record-signal.v1` when the corresp
 Progression:
 - package `gamerhq-skill-xp-progression`
 - Skill ID `progression`
-- released baseline `v0.1.0`
+- released version `v0.2.0`
 - Runtime API `1`
 
-New post-v0.1 public API:
+Public API:
 - `progression.record-signal.v1`
 
 Payload:
@@ -116,12 +116,46 @@ Progression-side implementation is complete on current main:
 - repeatable external signals supported
 - Python 3.12 / 3.14 CI green
 
-## When complete
+## Completion
 
-Return with:
-- GamerHQ PR / commit
-- adapter behavior implemented
-- tests/CI result
-- any compatibility blocker discovered
+**Status: COMPLETED IN GAMERHQ `develop`**
 
-Progression may then document GamerHQ as a verified consumer.
+Target repository:
+`Duy-Phan96/GamerHQ`
+
+Target issue:
+`#147 — Integrate Progression v0.2.0 external signals`
+
+Target PR:
+`#148 — feat: integrate Progression v0.2 external signals`
+
+Target merge commit:
+`f2c237dd76133484e9a2f70ea8161c8a573b2100`
+
+Consumed Progression release:
+- `v0.2.0`
+- commit `b8226977adad5ea966f77805f6a4c0f56b78be17`
+- contract `progression.record-signal.v1`
+
+Verified Host behavior:
+- native booster transitions emit `discord/server_boosted`;
+- first transition from zero selectable games to one-or-more emits `profile/first_game_added`;
+- retries preserve stable dedupe keys;
+- missing/disabled Progression fails safely;
+- Host uses only the public Runtime Management contract;
+- GamerHQ pins the immutable Progression 0.2.0 commit.
+
+Target CI:
+- Python 3.12: PASS
+- Python 3.14: PASS
+- full pytest: PASS
+- repository audit: PASS
+- shell/Compose checks: PASS
+- production image build gate: PASS on Python 3.12
+
+Production:
+- **not deployed**
+- no VPS/server update was performed
+- GamerHQ release/promotion remains a separate Host decision.
+
+No public-contract incompatibility was discovered.
